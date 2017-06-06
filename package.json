@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "body-parser": "^1.15.2",
+    "cookie-parser": "^1.4.3",
+    "debug": "^2.3.3",
+    "express-jwt": "^5.1.0",
+    "jade": "^1.11.0",
+    "log": "^1.4.0",
+    "mongoose-schema-extend": "^0.2.2",
+    "serve-favicon": "^2.3.2"
+  }
+}
