@@ -13,7 +13,7 @@ require('./resource');
 require('./grade');
 
 var gracefulShutdown;
-var dbURI = 'mongodb://localhost/cloud_class';
+var dbURI = 'mongodb://123.207.109.53/cloud_class';
 mongoose.connect(dbURI);
 
 mongoose.connection.on('connected', function () {

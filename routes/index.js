@@ -39,15 +39,21 @@ router.post('/classes/delSchedule/:userId', auth, classController.classDelSchedu
 router.post('/classes/changeSchedule/:userId', auth, classController.classChangeScheduleList);
 
 //添加/删除/修改 作业
-router.post('/classes/addAssignment', auth, assignmentController.classAddAssignment);
-router.post('/classes/addAssignments', auth, assignmentController.classAddAssignments);
-router.get('/classes/getAssignmentList/:classId/:userId', auth, assignmentController.classGetAssignmentList);
-router.get('/question/:assignmentId',auth,assignmentController.getQuestionListByAssignment);
 router.get('/assignment/assignmentId/:assignmentId',auth,assignmentController.getAssignmentById);
-router.get('/assignment/:userId',auth,assignmentController.getAllAssignmentList);
-router.get('/assignment/detail/:userId/:assignmentId',auth,assignmentController.findAssignmentGradeDetail);
-router.post('/classes/addQuestion',auth, assignmentController.classAddQuestionToAssignment);
+router.post('/classes/addAssignment', auth, assignmentController.classAddAssignment);
+router.post('/assignment/addQuestionGroup', auth, assignmentController.addQuestionGroupToAssignment);
+router.post('/classes/addQuestion',auth, assignmentController.addQuestionToGroup);
+router.put('/assignment/content', auth, assignmentController.updateQuestionGroupContent);
+router.get('/classes/getAssignmentList/:classId/:userId', auth, assignmentController.classGetAssignmentList);
+router.get('/question/:assignmentId',auth,assignmentController.getQuestionGroupList);
+router.get('/question/lastAnswer/:userId/:assignmentId', auth, assignmentController.getLastAnswer);
+router.get('/question/group/:assignmentId/:questionGroupId',auth,assignmentController.getQuestionGroupById);
 router.post('/question/addResponse',auth,assignmentController.addResponseToQuestion);
+router.get('/assignment/:userId',auth,assignmentController.getAllAssignmentList);
+router.post('/assignment/createone', auth, assignmentController.createAssignment);
+router.get('/assignment/detail/:userId/:assignmentId',auth,assignmentController.findAssignmentGradeDetail);
+
+router.post('/classes/addAssignments', auth, assignmentController.classAddAssignments);
 router.post('/classes/delAssignment/:userId', auth, assignmentController.classDelAssignment);
 router.post('/classes/delAssignments/:userId', auth, assignmentController.classDelAssignments);
 router.post('/classes/changeAssignment/:userId', auth, assignmentController.classChangeAssignment);

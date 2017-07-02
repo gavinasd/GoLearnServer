@@ -29,3 +29,14 @@ var tpoReadingQuestionSchema = new mongoose.Schema({
 	answer:String
 });
 var TpoReadingQuestion = Question.discriminator('TpoReadingQuestion', tpoReadingQuestionSchema);
+
+//单词题
+var vocabularyQuestionSchema = new mongoose.Schema({
+    //题目
+    question:String,
+    //选项
+    options:[{type:String}],
+    //答案
+    answer:String
+});
+var VocabularyQuestion = Question.discriminator('VocabularyQuestion', vocabularyQuestionSchema);

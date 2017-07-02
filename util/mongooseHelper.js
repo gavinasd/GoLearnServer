@@ -10,6 +10,8 @@ let Grade = mongoose.model('Grade');
 let ResponseToQuestion = mongoose.model('ResponseToQuestion');
 let Question = mongoose.model('Question');
 let Assignment = mongoose.model('Assignment');
+let Log = require('log');
+let log = new Log('debug');
 
 let Promise = require('bluebird');
 mongoose.Promise = Promise;
@@ -229,7 +231,11 @@ module.exports.findAssignmentById = function (assignmentId, populationOps){
         collection.exec((err, assignment)=> {
             if(err){
                 reject(err);
-            } else{
+            }
+            else if(!assignment){
+                reject('没有这个作业');
+            }
+            else{
                 resolve(assignment);
             }
         })
@@ -260,5 +266,117 @@ module.exports.findResponse = function(userId, questionId){
                     resolve(question);
                 }
             });
+    });
+};
+
+module.exports.createAssignment = function(assignment){
+    return new Promise((resolve, reject)=>{
+        assignment.save(function(err){
+            if(err){
+                log.err(err);
+                reject(err);
+            }
+            else{
+                resolve();
+            }
+        });
+    });
+};
+
+module.exports.createQuestionGroup = function (questionGroup) {
+    return new Promise((resolve, reject)=>{
+        questionGroup.save(function(err){
+            if(err){
+                log.err(err);
+                reject(err);
+            }
+            else{
+                resolve();
+            }
+        });
+    });
+};
+
+module.exports.insertQuestionGroupToAssignment = function(assignmentId, questionGroup){
+    return new Promise((resolve, reject)=>{
+        Assignment.findById(assignmentId)
+            .exec(function(err,assignment){
+                if(err){
+                    reject(err);
+                }
+                else if (!assignment){
+                    reject("找不到这个作业")
+                }
+                else {
+                    assignment.questionGroupList.push(questionGroup);
+                    let length = assignment.questionGroupList.length;
+                    assignment.save((err)=>{
+                        if(err){
+                            reject(err);
+                        } else{
+                            resolve(assignment.questionGroupList[length-1]);
+                        }
+                    })
+                }
+            });
+
+    });
+};
+
+module.exports.insertQuestionToGroup = function(newQuestion, assignment, groupId){
+    return new Promise((resolve, reject)=>{
+        newQuestion.save(function (err) {
+            if(err){
+                console.error("insertQuestion,err:"+err);
+                reject(err);
+            } else {
+                let questionGroup = assignment.questionGroupList.id(groupId);
+                if(!questionGroup){
+                    log.error('找不到这个questionGroup');
+                    reject('找不到这个questionGroup');
+                }
+                else{
+                    //更新assignment的列表
+                    questionGroup.questionList.push(newQuestion);
+                    questionGroup.totalScore += newQuestion.score;
+                    assignment.save((err)=>{
+                        if(err){
+                            console.error("insertQuestion,err:"+err);
+                            reject(err);
+                        } else{
+                            resolve(newQuestion, assignment);
+                        }
+                    });
+                }
+            }
+        });
+    });
+};
+
+module.exports.updateQuestionGroupContent = function (assignmentId, groupId, content) {
+    console.log(content);
+    return new Promise((resolve, reject)=>{
+        Assignment.findById(assignmentId, function (err, assignment) {
+            if(err){
+                reject(err);
+            }
+            else if (!assignment){
+                reject('没有这个作业');
+            }
+            else {
+                let questionGroup = assignment.questionGroupList.id(groupId);
+                questionGroup.content =  content;
+                assignment.save(function(err){
+                    if(err){
+                        reject(err);
+                    }
+                    else{
+                        resolve(assignment);
+                    }
+                })
+            }
+
+        });
+
     });
 };
