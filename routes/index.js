@@ -47,8 +47,10 @@ router.put('/assignment/content', auth, assignmentController.updateQuestionGroup
 router.get('/classes/getAssignmentList/:classId/:userId', auth, assignmentController.classGetAssignmentList);
 router.get('/question/:assignmentId',auth,assignmentController.getQuestionGroupList);
 router.get('/question/lastAnswer/:userId/:assignmentId', auth, assignmentController.getLastAnswer);
+router.get('/question/markingScore/:userId/:assignmentId', auth, assignmentController.getMarkingScore);
 router.get('/question/group/:assignmentId/:questionGroupId',auth,assignmentController.getQuestionGroupById);
 router.post('/question/addResponse',auth,assignmentController.addResponseToQuestion);
+router.post('/question/addScore',auth, assignmentController.addMarkingScoreToQuestion);
 router.get('/assignment/:userId',auth,assignmentController.getAllAssignmentList);
 router.post('/assignment/createone', auth, assignmentController.createAssignment);
 router.get('/assignment/detail/:userId/:assignmentId',auth,assignmentController.findAssignmentGradeDetail);

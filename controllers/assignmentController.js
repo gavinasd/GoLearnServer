@@ -380,7 +380,7 @@ module.exports.getQuestionGroupById = function (req, res) {
  * @param res
  */
 module.exports.addResponseToQuestion = function (req, res) {
-	console.log("adding response");
+	console.log("****adding response");
     let userId = req.body.userId;
 	let classId = req.body.classId;
 	let assignmentId = req.body.assignmentId;
@@ -424,68 +424,18 @@ module.exports.addResponseToQuestion = function (req, res) {
 
         return mongooseHelper.insertResponse(mResponse);
     }).then((response)=>{
-        console.log(response.question);
+        console.log(response.content);
         return mongooseHelper.findQuestionById(response.question);
 	}).then((question)=>{
-	    mQuestion = question;
-	    return mongooseHelper.findGrade(userId, assignmentId)
-	}).then((grade)=>{
-	    if(grade){
-            let hasResponse = 0;//如果grade里面已经有过这个response，那么update就行了
-	        grade.responseList.forEach(function(response){
-	            console.log("*****");
-	            console.log("response.questionId",typeof response.questionId.toString());
-	            console.log("mquestion._id",typeof mQuestion._id.toString());
-	            console.log(response.questionId.toString()==mQuestion._id.toString());
-	            if(response.questionId.toString()==mQuestion._id.toString()) {
-                    hasResponse++;
-                    if (mQuestion.answer == content) {
-                        response.score = mQuestion.score;
-                    } else {
-                        response.score = 0;
-                    }
-                }
-                console.log(response);
-            });
-	        console.log("hasResponse",hasResponse);
-	        console.log(grade);
-	        //如果没有出现过这个response
-	        if(hasResponse == 0) {
-                if (mQuestion.answer == content) {
-                    grade.responseList.push({
-                        'questionId': mQuestion._id,
-                        'score': mQuestion.score
-                    });
-                } else {
-                    grade.responseList.push({
-                        'questionId': mQuestion._id,
-                        'score': 0
-                    });
-                }
-            }
-        } else {
-            //没有这个grade，所以创建一个
-            grade = new Grade();
-            grade.studentId = userId;
-            grade.assignmentId = assignmentId;
-            if (mQuestion.answer == content) {
-                grade.responseList.push({
-                    'questionId': mQuestion._id,
-                    'score': mQuestion.score
-                });
-            } else {
-                grade.responseList.push({
-                    'questionId': mQuestion._id,
-                    'score': 0
-                });
-            }
+	    //可以自动判断答案的类型，可以直接插入成绩
+        console.log(question.questionType,question.answer);
+        if(question.questionType == mConst.QuestionType.TPO_READING_TYPE){
+            let score = (question.answer == content)?question.score:0;
+            addMarkingScore(assignmentId,questionId,userId, score);
         }
-
-        return mongooseHelper.insertGrade(grade);
-    }).then((grade)=>{
+    }).then(()=>{
 	    util.sendJSONresponse(res, 200, {
 	        "response":mResponse,
-            "grade":grade
         });
     }).catch((err)=>{
 	    console.error(err);
@@ -494,6 +444,23 @@ module.exports.addResponseToQuestion = function (req, res) {
         });
     });
 
+};
+
+module.exports.addMarkingScoreToQuestion = function(req, res){
+    console.log("*********adding Marking score");
+    let userId = req.body.userId;
+    let classId = req.body.classId;
+    let assignmentId = req.body.assignmentId;
+    let questionId = req.body.questionId;
+    let score = req.body.score;
+
+    console.log(!score);
+    if(!userId || !assignmentId || !classId || !questionId){
+        util.errorWithParameters(res);
+        return 0;
+    }
+
+    addMarkingScore(assignmentId, questionId, userId, score);
 };
 
 module.exports.classAddAssignments = function (req, res) {
@@ -652,6 +619,83 @@ module.exports.getLastAnswer = function(req, res){
 
 };
 
+module.exports.getMarkingScore = function (req, res) {
+    console.log("********getting score");
+    let assignmentId = req.params.assignmentId;
+    let userId = req.params.userId;
+
+    if(!assignmentId || !userId){
+        util.errorWithParameters(res);
+        return;
+    }
+
+    mongooseHelper.findGrade(userId,assignmentId)
+        .then((grade)=>{
+            util.sendJSONresponse(res, 200, {
+                'responseList': grade.responseList
+            });
+            return 0;
+        })
+        .catch((err)=>{
+            util.sendJSONresponse(res, 404, {
+                "errmsg":err
+            });
+        });
+};
+
+/**
+ * 从某一个课堂中移除掉一份作业
+ * @param req
+ * @param res
+ */
+module.exports.removeAssignmentFromClass = function(req, res){
+    let userId = req.params.userId;
+    let classId = req.params.classId;
+    let assignmentId = req.params.assignmentId;
+    let userCache;
+
+    if(!userId || !classId || !assignmentId){
+        util.errorWithParameters(res);
+    }
+
+    mongooseHelper.findUserById(user)
+        .then((user)=>{
+            if(!user || user.userType !== '1') {
+                util.sendJSONresponse(res, 400, {
+                    'errmsg': '你没有这个权限'
+                });
+                return;
+            }
+            userCache = user;
+
+            return mongooseHelper.findClassById(classId);
+        })
+        .then((mClass)=>{
+            if(!mClass.isTeacherIn(userId)){
+                util.sendJSONresponse(res, 400, {
+                    'errmsg': '你没有这个权限'
+                });
+                return;
+            }
+
+            if(mclass.assignmentList.indexOf(assignmentId) >= 0){
+                mClass.assignmentList.splice(mclass.assignmentList.indexOf(assignmentId), 1);
+                mClass.save(function (err){
+                    if(err){
+                        util.sendJSONresponse(res, 404, {
+                            'errmsg':err
+                        });
+                    }
+                })
+            }
+        })
+        .catch((err)=>{
+            util.sendJSONresponse(res, 404, {
+                'errmsg':err
+            });
+        });
+};
+
 
 let addQuestion = function (newQuestion, assignment, groupId, res){
     mongooseHelper
@@ -697,7 +741,6 @@ let addTpoReadingQuestion = function (quest, res, assignment, groupId, userId) {
  */
 let addVocabularyQuestion = function (quest, res, assignment, groupId, userId){
     let question = quest.question;
-    let options = quest.options;
     let answer = quest.answer;
     let score = quest.score;
 
@@ -705,7 +748,6 @@ let addVocabularyQuestion = function (quest, res, assignment, groupId, userId){
         creator:userId,
         questionType:mConst.QuestionType.VOCABULARY_TYPE,
         question:question,
-        options:options,
         answer:answer,
         score:score
     });
@@ -812,4 +854,41 @@ let returnLastAnswer = function(userId, questionIdList){
     return Promise.all(results);
 };
 
+let addMarkingScore = function (assignmentId,questionId,userId,score){
+    return mongooseHelper.findGrade(userId,assignmentId)
+        .then((grade)=>{
+            if(grade){
+                let hasResponse = 0;
+                //如果grade里面已经有过这个response，那么update就行了
+                grade.responseList.forEach(function(response){
+                    console.log(response.questionId.toString()==questionId);
+                    if(response.questionId.toString()==questionId) {
+                        hasResponse++;
+                        response.score = score;
+                    }
+                });
+                //如果没有出现过这个response
+                if(hasResponse == 0) {
+                    grade.responseList.push({
+                        'questionId': questionId,
+                        'score': score
+                    });
+                }
+            }
+            else {
+                //没有这个grade，所以创建一个
+                grade = new Grade();
+                grade.studentId = userId;
+                grade.assignmentId = assignmentId;
+                grade.responseList.push({
+                    'questionId': questionId,
+                    'score': score
+                });
+            }
+
+            console.log(grade);
+
+            return mongooseHelper.insertGrade(grade);
+        });
+};
 

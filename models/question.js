@@ -34,8 +34,6 @@ var TpoReadingQuestion = Question.discriminator('TpoReadingQuestion', tpoReading
 var vocabularyQuestionSchema = new mongoose.Schema({
     //题目
     question:String,
-    //选项
-    options:[{type:String}],
     //答案
     answer:String
 });

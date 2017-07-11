@@ -87,8 +87,6 @@ classSchema.methods.isUserIn = function (userId) {
  * 查询该班级是否有这个作业
  */
 classSchema.methods.isAssignmentIn = function(mAssignmentId){
-	console.log(this.assignmentList);
-	console.log(mAssignmentId);
     let array = this.assignmentList.filter(function (assignment) {
 		//有可能已经populate
 		if(assignment._id){

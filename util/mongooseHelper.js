@@ -32,7 +32,6 @@ module.exports.findClassById = function(id,populationOps){
                 reject({error: "找不到该班级"});
             }
             else {
-                console.log(mClass);
                 resolve(mClass);
             }
         });
