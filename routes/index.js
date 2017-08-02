@@ -40,14 +40,15 @@ router.post('/classes/changeSchedule/:userId', auth, classController.classChange
 
 //添加/删除/修改 作业
 router.get('/assignment/assignmentId/:assignmentId',auth,assignmentController.getAssignmentById);
+router.get('/assignment/info/:assignmentId/:studentId', auth, assignmentController.getAssignmentInfo);
+router.post('/assignment/info', auth, assignmentController.submitAssignmentInfo);
 router.post('/classes/addAssignment', auth, assignmentController.classAddAssignment);
 router.post('/assignment/addQuestionGroup', auth, assignmentController.addQuestionGroupToAssignment);
 router.post('/classes/addQuestion',auth, assignmentController.addQuestionToGroup);
 router.put('/assignment/content', auth, assignmentController.updateQuestionGroupContent);
-router.get('/classes/getAssignmentList/:classId/:userId', auth, assignmentController.classGetAssignmentList);
-router.get('/question/:assignmentId',auth,assignmentController.getQuestionGroupList);
-router.get('/question/lastAnswer/:userId/:assignmentId', auth, assignmentController.getLastAnswer);
+router.get('/classes/getAssignmentList/:classId/:userId/:page', auth, assignmentController.classGetAssignmentList);
 router.get('/question/markingScore/:userId/:assignmentId', auth, assignmentController.getMarkingScore);
+router.get('/question/spendTime/:userId/:assignmentId', auth, assignmentController.getSpendTime);
 router.get('/question/group/:assignmentId/:questionGroupId',auth,assignmentController.getQuestionGroupById);
 router.post('/question/addResponse',auth,assignmentController.addResponseToQuestion);
 router.post('/question/addScore',auth, assignmentController.addMarkingScoreToQuestion);

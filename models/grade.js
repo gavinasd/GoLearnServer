@@ -16,6 +16,8 @@ const gradeSchema = new mongoose.Schema({
     studentId:{type:Schema.ObjectId, required:true},
     //作业ID
     assignmentId:{type:Schema.ObjectId, required:true},
+    //学生回答题目的时间
+    spendTime: {type:Number, default: 0},
     //学生回答题目的列表，包括分数
     responseList:[responseSchema]
 

@@ -16,8 +16,6 @@ let log = new Log('debug');
 let Promise = require('bluebird');
 mongoose.Promise = Promise;
 
-
-
 module.exports.findClassById = function(id,populationOps){
     return new Promise(function (resolve, reject) {
         let collection = Class.findById(id);
@@ -72,8 +70,7 @@ module.exports.findGrade = function (studentId, assignmentId) {
         Grade.findOne({'studentId':studentId,'assignmentId':assignmentId})
             .exec(function (err, grade) {
                 if(err){
-                    console.error("findGrade,err:"+err);
-                    reject({error:err});
+                    throw('数据库查找有误');
                 } else {
                     resolve(grade);
                 }
@@ -239,18 +236,6 @@ module.exports.findAssignmentById = function (assignmentId, populationOps){
             }
         })
     })
-};
-
-module.exports.findAssignmentById = function (assignmentId) {
-    return new Promise((resolve, reject)=>{
-        Assignment.findById(assignmentId, function (err, assignment) {
-            if(err){
-                reject(err);
-            } else{
-                resolve(assignment);
-            }
-        })
-    });
 };
 
 module.exports.findResponse = function(userId, questionId){
