@@ -3,7 +3,9 @@
  */
 const QuestionType = {
     TPO_READING_TYPE : 'tpo_reading',
-    VOCABULARY_TYPE : "vocabulary"
-}
+    VOCABULARY_TYPE : "vocabulary",
+    INDEPEDENT_WRITING_TYPE: 'independent_writing',
+    INTEGRATED_WRITING_TYPE: 'integrated_writing'
+};
 
 module.exports.QuestionType = QuestionType;

@@ -41,6 +41,7 @@ router.post('/classes/changeSchedule/:userId', auth, classController.classChange
 //添加/删除/修改 作业
 router.get('/assignment/assignmentId/:assignmentId',auth,assignmentController.getAssignmentById);
 router.get('/assignment/info/:assignmentId/:studentId', auth, assignmentController.getAssignmentInfo);
+router.put('/assignment/done', auth, assignmentController.submitAssignmentDone);
 router.post('/assignment/info', auth, assignmentController.submitAssignmentInfo);
 router.post('/classes/addAssignment', auth, assignmentController.classAddAssignment);
 router.post('/assignment/addQuestionGroup', auth, assignmentController.addQuestionGroupToAssignment);

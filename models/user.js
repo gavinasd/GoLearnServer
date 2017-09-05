@@ -12,6 +12,7 @@ var userSchema = new mongoose.Schema({
 	//基本注册信息
 	email:{type:String, unique:true, required:true},
 	nickName:{type:String, required:true},
+	avatar:{type:String, required:true},
 	userType:{type:Number, required:true},//1是老师，其他是学生
 	hash:String,
 	salt:String,

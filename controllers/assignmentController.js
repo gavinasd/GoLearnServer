@@ -18,6 +18,8 @@ let Question = mongoose.model('Question');
 let TpoReadingQuestion = mongoose.model('TpoReadingQuestion');
 let ResponseToQuestion = mongoose.model('ResponseToQuestion');
 let VocabularyQuestion = mongoose.model('VocabularyQuestion');
+let IndependentWritingQuestion = mongoose.model('IndependentWritingQuestion');
+let IntegratedWritingQuestion = mongoose.model('IntegratedWritingQuestion');
 let Grade = mongoose.model('Grade');
 
 
@@ -35,16 +37,20 @@ class AssignmentInfo{
 class GradeInfo{
     constructor(studentId,
                 studentName,
+                studentAvatar,
                 score,
                 totalScore,
                 undoneNum,
+                done,
                 spendTime
     ){
         this.studentId = studentId;
         this.studentName = studentName;
+        this.studentAvatar = studentAvatar;
         this.score = score;
         this.totalScore = totalScore;
         this.undoneNum = undoneNum;
+        this.done = done;
         this.spendTime = spendTime || 0;
     }
 };
@@ -252,6 +258,13 @@ module.exports.addQuestionToGroup = function(req, res){
                 break;
             case mConst.QuestionType.VOCABULARY_TYPE:
                 addVocabularyQuestion(quest, res, assignment, groupId,userId);
+                break;
+            case mConst.QuestionType.INDEPEDENT_WRITING_TYPE:
+                addIndependentWritingQuestion(quest, res, assignment, groupId, userId);
+                break;
+            case mConst.QuestionType.INTEGRATED_WRITING_TYPE:
+                addIntegratedWritingQuestion(quest, res, assignment, groupId, userId);
+                break;
         }
 
     });
@@ -317,7 +330,9 @@ module.exports.classGetAssignmentList = function (req, res) {
             if (mClass.isTeacherIn(userId)){
                 return returnAssignmentListToTeacher(mClass.studentList, assignmentList);
             } else if(mClass.isStudentIn(userId)){
-                return returnAssignmentListToStudent(userId, assignmentList);
+                return returnAssignmentListToStudent(
+                    mClass.studentList.filter(student => student._id == userId),
+                    assignmentList);
             }
         }).then(function(obj){
             util.sendJSONresponse(res, 200 , {
@@ -403,8 +418,6 @@ module.exports.addResponseToQuestion = function (req, res) {
         mResponse.question = questionId;
         mResponse.content = content;
 
-
-
         return mongooseHelper.insertResponse(mResponse);
     }).then((response)=>{
         console.log(response.content);
@@ -415,10 +428,11 @@ module.exports.addResponseToQuestion = function (req, res) {
     }).then(()=>{
 	    //可以自动判断答案的类型，可以直接插入成绩
         console.log(mQuestion.questionType,mQuestion.answer);
+        let score;
         if(mQuestion.questionType == mConst.QuestionType.TPO_READING_TYPE){
-            let score = (mQuestion.answer == content)?mQuestion.score:0;
-            return addMarkingScore(assignmentId,questionId,userId, score);
+            score = (mQuestion.answer == content)?mQuestion.score:0;
         }
+        return addMarkingScore(assignmentId,questionId,userId, score);
     }).then(()=>{
 	    util.sendJSONresponse(res, 200, {
 	        "response":mResponse,
@@ -523,9 +537,10 @@ module.exports.createAssignment = function(req, res){
     log.info("****creating assignment");
     let creator = req.body.creator;
     let assignmentName = req.body.assignmentName;
-    log.info(creator + " " + assignmentName);
+    let type = req.body.type;
+    log.info(creator + " " + assignmentName + " "+ type);
 
-    if(!creator || !assignmentName ){
+    if(!creator || !assignmentName || !type){
         util.errorWithParameters(res);
         return 0;
     }
@@ -533,6 +548,7 @@ module.exports.createAssignment = function(req, res){
     let newAssignment = new Assignment({
         'creator': creator,
         'assignmentName': assignmentName,
+        'type': type
     });
 
     mongooseHelper.createAssignment(newAssignment)
@@ -635,6 +651,7 @@ module.exports.getAssignmentInfo = function (req, res) {
 
 module.exports.submitAssignmentInfo = function(req, res){
     log.info('********submiting info');
+    log.info(req.body);
     const classId = req.body.classId;
     const assignmentId = req.body.assignmentId;
     const studentId = req.body.studentId;
@@ -694,9 +711,38 @@ module.exports.submitAssignmentInfo = function(req, res){
     }).catch((err)=>{
         console.error(err);
         util.sendJSONresponse(res, 404, {
-            "errms":err
+            "errmsg":err
         });
     });
+};
+
+module.exports.submitAssignmentDone = function (req, res) {
+    log.info('********submitting done');
+    log.info(req.body);
+
+    const studentId = req.body.studentId;
+    const assignmentId = req.body.assignmentId;
+    if(!studentId || !assignmentId){
+        util.errorWithParameters(res);
+    }
+
+    mongooseHelper.findGrade(studentId, assignmentId)
+        .then((grade)=>{
+            if(grade){
+                grade.done = true;
+                return mongooseHelper.insertGrade(grade);
+            }
+        })
+        .then((grade)=>{
+            util.sendJSONresponse(res, 200, {
+                "grade":grade
+            });
+        }).catch((err)=>{
+            console.error(err);
+            util.sendJSONresponse(res, 404, {
+                "errmsg":err
+            });
+        });
 };
 
 module.exports.getMarkingScore = function (req, res) {
@@ -860,11 +906,48 @@ let addVocabularyQuestion = function (quest, res, assignment, groupId, userId){
     addQuestion(newQuestion, assignment, groupId, res);
 };
 
+
+/**
+ * 添加独立写作题目
+ */
+let addIndependentWritingQuestion = function (quest, res, assignment, groupId, userId){
+    let question = quest.question;
+    let answer = quest.answer;
+    let score = quest.score;
+
+    let newQuestion = new IndependentWritingQuestion({
+        creator:userId,
+        questionType:mConst.QuestionType.INDEPEDENT_WRITING_TYPE,
+        question:question,
+        answer:answer,
+        score:score
+    });
+
+    addQuestion(newQuestion, assignment, groupId, res);
+};
+
+/**
+ * 添加综合写作题目
+ */
+let addIntegratedWritingQuestion = function(quest, res, assignment, groupId, userId){
+    let answer = quest.answer;
+    let score = quest.score;
+
+    let newQuestion = new IntegratedWritingQuestion({
+        creator: userId,
+        questionType: mConst.QuestionType.INTEGRATED_WRITING_TYPE,
+        answer: answer,
+        score: score
+    });
+
+    addQuestion(newQuestion, assignment, groupId, res);
+};
+
 let returnAssignmentListToTeacher = function (studentIdList, assignmentList) {
     let results = assignmentList.map((assignment)=>{
         let gradeInfoList = studentIdList.map((student)=>{
             return mongooseHelper.findGrade(student._id, assignment._id)
-                .then((grade)=>assembleGradeInfo(grade,assignment,student._id,student.nickName));
+                .then((grade)=>assembleGradeInfo(grade,assignment,student._id,student.nickName, student.avatar));
         });
         return Promise.all(gradeInfoList).then((gradeInfoList)=>{
             let assignmentInfo = new AssignmentInfo(assignment._id, assignment.assignmentName, gradeInfoList);
@@ -875,14 +958,15 @@ let returnAssignmentListToTeacher = function (studentIdList, assignmentList) {
     return Promise.all(results);
 };
 
-let returnAssignmentListToStudent = function (studentId, assignmentList) {
+let returnAssignmentListToStudent = function (studentList, assignmentList) {
     log.info('assignmentList',JSON.stringify(assignmentList));
+    let student = studentList[0];
     let results = assignmentList.map(function (assignment) {
-        log.info('studentId',studentId);
+        log.info('studentId',student._id);
         log.info('assignmentId',assignment._id);
 
-        return mongooseHelper.findGrade(studentId,assignment._id)
-            .then(grade=>assembleGradeInfo(grade,assignment,studentId,''))
+        return mongooseHelper.findGrade(student._id,assignment._id)
+            .then(grade=>assembleGradeInfo(grade,assignment,student._id,student.nickName, student.avatar))
             .then((gradeInfo)=>{
                 let assignmentInfo = new AssignmentInfo(assignment._id, assignment.assignmentName, [gradeInfo]);
                 return assignmentInfo;
@@ -892,20 +976,23 @@ let returnAssignmentListToStudent = function (studentId, assignmentList) {
 };
 
 //得到grade后，组装好gradeInfo信息返回
-let assembleGradeInfo = function (grade,assignment,studentId,studentName){
+let assembleGradeInfo = function (grade,assignment,studentId,studentName, studentAvatar){
     if(grade){
         let score = 0;
         grade.responseList.forEach((response)=>{
-            score += response.score;
+            //如果score是负数，那么就是意味着这个道题还没有改。
+            if(response.score >= 0){
+                score += response.score;
+            }
         });
         let undoneNum = assignment.getQuestionLength() - grade.responseList.length;
 
-        let gradeInfo = new GradeInfo(studentId, studentName,
-            score, assignment.getTotalScore(),undoneNum, grade.spendTime);
+        let gradeInfo = new GradeInfo(studentId, studentName, studentAvatar,
+            score, assignment.getTotalScore(),undoneNum, grade.done, grade.spendTime);
         return gradeInfo;
     } else{
-        let gradeInfo = new GradeInfo(studentId, studentName,
-            0,assignment.getTotalScore(), assignment.getQuestionLength(), 0);
+        let gradeInfo = new GradeInfo(studentId, studentName, studentAvatar,
+            0,assignment.getTotalScore(), assignment.getQuestionLength(), false, 0);
         return gradeInfo;
     }
 };
@@ -981,12 +1068,16 @@ const getMarkScore = function(grade) {
 };
 
 const updateGradeSpendTime = function (assignmentId, studentId, time) {
+    console.log('***update spendTime');
     return mongooseHelper.findGrade(studentId, assignmentId)
         .then((grade)=>{
             if(grade){
-                grade.spendTime = time;
+                if(time > (grade.spendTime || 0)) {
+                    grade.spendTime = time;
+                }
             }
             else {
+                console.log('没有这个grade，创建一下');
                 grade = new Grade();
                 grade.assignmentId = assignmentId;
                 grade.studentId = studentId;
@@ -998,6 +1089,7 @@ const updateGradeSpendTime = function (assignmentId, studentId, time) {
 };
 
 const updateStudentAnswer = function (classId, assignmentId, questionId, studentId, studentAnswer) {
+    console.log('***update answer');
     let mResponse = new ResponseToQuestion();
     mResponse.creator = studentId;
     mResponse.class = classId;
@@ -1005,96 +1097,17 @@ const updateStudentAnswer = function (classId, assignmentId, questionId, student
     mResponse.question = questionId;
     mResponse.content = studentAnswer;
 
-    let updateAnswer = mongooseHelper.insertResponse(mResponse);
-    let addMarkScore = mongooseHelper.findQuestionById(questionId)
+    return mongooseHelper.insertResponse(mResponse)
+        .then(data=>{
+            return mongooseHelper.findQuestionById(questionId);
+        })
         .then(question => {
             if(question.questionType == mConst.QuestionType.TPO_READING_TYPE){
                 let score = (question.answer == studentAnswer)?question.score:0;
                 return addMarkingScore(assignmentId,questionId, studentId, score);
             }
         });
-    //只需要返回第1个参数
-    return Promise.all([updateAnswer, addMarkScore])
-        .then(data => data[0]);
-
 };
-
-// const getLastAnswerList = function (assignment, studentId) {
-//     let groupList$ = assignment.questionGroupList.map(group => {
-//         let questionList$ = group.questionList.map((question) => {
-//             return getLastAnswerItem(question._id, studentId)
-//                 .then((content) => {
-//                     question.lastAnswer = content;
-//                     return question;
-//                 });
-//         });
-//
-//         return Promise.all(questionList$).then(questionList => {
-//             group.questionList = questionList;
-//             return group;
-//         })
-//     });
-//
-//     return Promise.all(groupList$).then(groupList => {
-//         assignment.questionGroupList = groupList;
-//         return assignment;
-//     });
-// };
-//
-// const getLastAnswerItem = function (questionId, studentId){
-//     return mongooseHelper.findResponse(studentId,questionId)
-//         .then((response)=>{
-//             //如果response为空，那么需要返回的就是question就足够了
-//             if(!response){
-//                 return '';
-//             }
-//             else {
-//                 return response.content;
-//             }
-//         })
-// };
-//
-// const getMarkingScoreList = function (assignment, studentId) {
-//     let groupList$ = assignment.questionGroupList.map(group => {
-//         let questionList$ = group.questionList.map((question) => {
-//             return getMarkingScoreItem(assignment._id, question._id, studentId)
-//                 .then((score) => {
-//                     question.markingScore = score;
-//                     return question;
-//                 });
-//         });
-//
-//         return Promise.all(questionList$).then(questionList => {
-//             group.questionList = questionList;
-//             return group;
-//         })
-//     });
-//
-//     return Promise.all(groupList$).then(groupList => {
-//         assignment.questionGroupList = groupList;
-//         return assignment;
-//     });
-//
-// };
-//
-// const getMarkingScoreItem = function (assignmentId, questionId, studentId) {
-//     return mongooseHelper.findGrade(studentId, assignmentId)
-//         .then(grade=>{
-//             if(grade){
-//                 for(let mResponse of grade.responseList){
-//                     if(mResponse.questionId.toString() == questionId.toString()){
-//                         return mResponse.score;
-//                     }
-//                 }
-//
-//                 log.info('找不到这个question');
-//                 return -1;
-//             }
-//             else {
-//                 return -1;
-//             }
-//         })
-// };
 
 const addMarkingScore = function (assignmentId,questionId,userId,score){
     console.log("********改一下分"+score);

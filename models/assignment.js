@@ -32,6 +32,8 @@ var assignmentSchema = new mongoose.Schema({
 	creator:{type:Schema.Types.ObjectId, ref:'User'},
 	//作业的名字
     assignmentName:String,
+	//类型
+    type:String,
 	//作用里包含的问题，这里是以questionGroup的形式存在
     //即是所有的问题都必须组装questionGroup的形式才可以添加到assignment中
 	questionGroupList:[questionGroupSchema],

@@ -23,6 +23,7 @@ module.exports.register = function (req, res) {
 	//这几项必须
 	user.email = req.body.email;
 	user.nickName = req.body.nickName;
+	user.avatar = req.body.avatar;
 	user.userType = req.body.userType;
 	user.setPassword(req.body.password);
 	
@@ -46,7 +47,8 @@ module.exports.register = function (req, res) {
 			"token":token,
 			"id":user._id,
             "userType":user.userType,
-			"userName":user.nickName
+			"userName":user.nickName,
+            "avatar":user.avatar
 		});
 		return 0;
 	});

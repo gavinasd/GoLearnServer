@@ -19,8 +19,9 @@ const gradeSchema = new mongoose.Schema({
     //学生回答题目的时间
     spendTime: {type:Number, default: 0},
     //学生回答题目的列表，包括分数
-    responseList:[responseSchema]
-
+    responseList:[responseSchema],
+    //标记这个学生是否已经确认提交，如果确认了，就不能再做更改
+    done: {type: Boolean, default: false}
 });
 
 mongoose.model('Grade', gradeSchema);

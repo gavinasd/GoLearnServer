@@ -115,12 +115,50 @@ module.exports.insertResponse = function (response) {
                 }
                 else{
                     //并没有oldResponse，直接save
+                    console.log('一个新的response');
                     response.save(function (err) {
                         if(err){
                             console.error("insertResponse,err:"+err);
                             reject({error:err});
                         } else{
-                            resolve(response);
+                            //如果这是一个新的response，那么则意味着grade的responseList中没有这个数据
+                            const questionId = response.question;
+                            const assignmentId = response.assignment;
+                            const userId = response.creator;
+
+                            Grade.findOne({'studentId':userId,'assignmentId':assignmentId})
+                                .exec(function (err, grade) {
+                                    if(err){
+                                        throw('数据库查找有误');
+                                    } else {
+                                        if(grade){
+                                            grade.responseList.push({
+                                                'questionId': questionId,
+                                                'score': -1
+                                            });
+
+                                        }
+                                        else {
+                                            //没有这个grade，所以创建一个
+                                            console.log('没有这个grade，创建一下');
+                                            grade = new Grade();
+                                            grade.studentId = userId;
+                                            grade.assignmentId = assignmentId;
+                                            grade.responseList.push({
+                                                'questionId': questionId,
+                                                'score': -1
+                                            });
+                                        }
+
+                                        grade.save(function(err){
+                                            if(err){
+                                                throw('数据库查找有误');
+                                            }
+
+                                            resolve(response);
+                                        });
+                                    }
+                                });
                         }
                     });
                 }

@@ -38,3 +38,20 @@ var vocabularyQuestionSchema = new mongoose.Schema({
     answer:String
 });
 var VocabularyQuestion = Question.discriminator('VocabularyQuestion', vocabularyQuestionSchema);
+
+
+//独立写作题
+var IndependentWritingQuestionSchema = new mongoose.Schema({
+    //题目
+    question:String,
+    //答案
+    answer: String
+});
+var IndependentWritingQuestion = Question.discriminator('IndependentWritingQuestion', IndependentWritingQuestionSchema);
+
+//综合写作题
+var IntegratedWritingQuestionSchema = new mongoose.Schema({
+    //答案
+    answer: String
+});
+var IntegratedWritingQuestion = Question.discriminator('IntegratedWritingQuestion', IntegratedWritingQuestionSchema);
