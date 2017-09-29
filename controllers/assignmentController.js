@@ -20,16 +20,19 @@ let ResponseToQuestion = mongoose.model('ResponseToQuestion');
 let VocabularyQuestion = mongoose.model('VocabularyQuestion');
 let IndependentWritingQuestion = mongoose.model('IndependentWritingQuestion');
 let IntegratedWritingQuestion = mongoose.model('IntegratedWritingQuestion');
+let TpoListeningQuestion = mongoose.model('TpoListeningQuestion');
 let Grade = mongoose.model('Grade');
 
 
 class AssignmentInfo{
     constructor(assignmentId,
                 assignmentName,
+                assignmentType,
                 gradeInfoList
     ){
         this.assignmentId = assignmentId;
         this.assignmentName = assignmentName;
+        this.assignmentType = assignmentType;
         this.gradeInfoList = gradeInfoList;
     }
 };
@@ -174,52 +177,6 @@ module.exports.addQuestionGroupToAssignment = function (req, res) {
         });
 };
 
-// /**
-//  * 要修改的内容
-//  * 1.question是添加到questionGroup中去
-//  *
-//  */
-// /**
-//  * 添加题目到作业中
-//  */
-// module.exports.classAddQuestionToAssignment = function (req, res) {
-//     console.log("adding question");
-// 	let assignmentId = req.body.assignmentId;
-// 	let quest = req.body.question;
-// 	let userId = quest.creator;
-// 	let questionType = quest.questionType;
-//
-// 	if(!userId || !assignmentId || !questionType){
-// 		util.errorWithParameters(res);
-// 		return 0;
-// 	}
-//
-// 	Assignment.findById(assignmentId,function(err,assignment){
-// 		if(err || !assignment){
-// 			util.sendJSONresponse(res,404,{
-// 				"errmsg":"找不到该作业"
-// 			});
-// 			return 0;
-// 		}
-// 		if(assignment.creator != userId) {
-// 			util.sendJSONresponse(res, 404, {
-// 				"errmsg":"你无权修改该作业"
-// 			});
-// 			return 0;
-// 		}
-//
-// 		console.log("questionType:" + questionType);
-// 		switch (questionType){
-// 			case mConst.QuestionType.TPO_READING_TYPE:
-// 				addTpoReadingQuestion(quest, res, assignment, userId);
-// 				break;
-//             case mConst.QuestionType.VOCABULARY_TYPE:
-//                 addVocabularyQuestion(quest, res, assignment, userId);
-// 		}
-//
-// 	});
-// };
-
 /**
  * 添加题目到questionGroup中
  */
@@ -253,17 +210,24 @@ module.exports.addQuestionToGroup = function(req, res){
 
         console.log("questionType:" + questionType);
         switch (questionType){
-            case mConst.QuestionType.TPO_READING_TYPE:
+            case mConst.QuestionType.TPO_READING_SINGLE_CHOICE_TYPE:
+            case mConst.QuestionType.TPO_READING_INSERT_CHOICE_TYPE:
+            case mConst.QuestionType.TPO_READING_TOPIC_TYPE:
                 addTpoReadingQuestion(quest, res, assignment, groupId, userId);
                 break;
             case mConst.QuestionType.VOCABULARY_TYPE:
                 addVocabularyQuestion(quest, res, assignment, groupId,userId);
                 break;
-            case mConst.QuestionType.INDEPEDENT_WRITING_TYPE:
+            case mConst.QuestionType.INDEPENDENT_WRITING_TYPE:
                 addIndependentWritingQuestion(quest, res, assignment, groupId, userId);
                 break;
             case mConst.QuestionType.INTEGRATED_WRITING_TYPE:
                 addIntegratedWritingQuestion(quest, res, assignment, groupId, userId);
+                break;
+            case mConst.QuestionType.TPO_LISTENING_SINGLE_CHOICE_TYPE:
+            case mConst.QuestionType.TPO_LISTENING_MULTIPLE_CHOICE_TYPE:
+            case mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION:
+                addTpoListeningQuestion(quest, res, assignment, groupId, userId);
                 break;
         }
 
@@ -874,14 +838,17 @@ let addTpoReadingQuestion = function (quest, res, assignment, groupId, userId) {
     let options = quest.options;
     let answer = quest.answer;
     let score = quest.score;
+    let type = quest.questionType;
+    let explanation = question.explanation;
 
     let newQuestion = new TpoReadingQuestion({
         creator:userId,
-        questionType:mConst.QuestionType.TPO_READING_TYPE,
+        questionType:type,
         passage:passage,
         question:question,
         options:options,
         answer:answer,
+        explanation:explanation,
         score:score
     });
     addQuestion(newQuestion, assignment, groupId, res);
@@ -943,6 +910,33 @@ let addIntegratedWritingQuestion = function(quest, res, assignment, groupId, use
     addQuestion(newQuestion, assignment, groupId, res);
 };
 
+/**
+ *
+ * 添加TPO听力题目
+ */
+let addTpoListeningQuestion = function(quest, res, assignment, groupId, userId){
+    let recordUrl = quest.recordUrl;
+    let question = quest.question;
+    let type = quest.questionType;
+    let options = quest.options;
+    let answer = quest.answer;
+    let score = quest.score;
+    let explanation = quest.explanation;
+
+    let newQuestion = new TpoListeningQuestion({
+        creator:userId,
+        questionType:type,
+        recordUrl:recordUrl,
+        question:question,
+        type:type,
+        options:options,
+        answer:answer,
+        explanation:explanation,
+        score:score
+    });
+    addQuestion(newQuestion, assignment, groupId, res);
+};
+
 let returnAssignmentListToTeacher = function (studentIdList, assignmentList) {
     let results = assignmentList.map((assignment)=>{
         let gradeInfoList = studentIdList.map((student)=>{
@@ -950,7 +944,7 @@ let returnAssignmentListToTeacher = function (studentIdList, assignmentList) {
                 .then((grade)=>assembleGradeInfo(grade,assignment,student._id,student.nickName, student.avatar));
         });
         return Promise.all(gradeInfoList).then((gradeInfoList)=>{
-            let assignmentInfo = new AssignmentInfo(assignment._id, assignment.assignmentName, gradeInfoList);
+            let assignmentInfo = new AssignmentInfo(assignment._id, assignment.assignmentName, assignment.type,gradeInfoList);
             return assignmentInfo;
         });
     });
@@ -968,7 +962,7 @@ let returnAssignmentListToStudent = function (studentList, assignmentList) {
         return mongooseHelper.findGrade(student._id,assignment._id)
             .then(grade=>assembleGradeInfo(grade,assignment,student._id,student.nickName, student.avatar))
             .then((gradeInfo)=>{
-                let assignmentInfo = new AssignmentInfo(assignment._id, assignment.assignmentName, [gradeInfo]);
+                let assignmentInfo = new AssignmentInfo(assignment._id, assignment.assignmentName,assignment.type, [gradeInfo]);
                 return assignmentInfo;
             });
     });
@@ -1102,8 +1096,35 @@ const updateStudentAnswer = function (classId, assignmentId, questionId, student
             return mongooseHelper.findQuestionById(questionId);
         })
         .then(question => {
-            if(question.questionType == mConst.QuestionType.TPO_READING_TYPE){
+            if(question.questionType == mConst.QuestionType.TPO_READING_SINGLE_CHOICE_TYPE
+                || question.questionType == mConst.QuestionType.TPO_READING_INSERT_CHOICE_TYPE
+                || question.questionType == mConst.QuestionType.TPO_LISTENING_SINGLE_CHOICE_TYPE
+                || question.questionType == mConst.QuestionType.TPO_LISTENING_MULTIPLE_CHOICE_TYPE
+                || question.questionType == mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION
+            ){
                 let score = (question.answer == studentAnswer)?question.score:0;
+                return addMarkingScore(assignmentId,questionId, studentId, score);
+            }
+
+            if(question.questionType == mConst.QuestionType.TPO_READING_TOPIC_TYPE){
+                let count = 0;
+                console.log(question.answer.split(''));
+                for(let choice of question.answer.split('')){
+                    console.log('choice:'+choice);
+                    if(studentAnswer.includes(choice)){
+                        count ++;
+                    }
+                }
+
+                let score = 0;
+                if(count == 3){
+                    score = 2;
+                }
+                else if (count == 2){
+                    score = 1;
+                }
+                log.info('score'+score);
+
                 return addMarkingScore(assignmentId,questionId, studentId, score);
             }
         });
