@@ -2,7 +2,7 @@
  * Created by 陈文聪 on 2016.11.30.
  */
 var mongoose = require('mongoose');
-
+let secret = require('../const/secret');
 require('./user');
 require('./course');
 require('./class');
@@ -13,7 +13,7 @@ require('./resource');
 require('./grade');
 
 var gracefulShutdown;
-var dbURI = 'mongodb://localhost/cloud_class';
+var dbURI = 'mongodb://'+secret.dbUser +':'+secret.pwd+'@localhost/cloud_class';
 mongoose.connect(dbURI);
 
 mongoose.connection.on('connected', function () {
