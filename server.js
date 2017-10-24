@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var passport = require('passport');
+let path = require('path');
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -23,6 +24,8 @@ app.use('/api',routeApi);
 
 //设置基本环境变量
 app.set('resources',__dirname+'/public/resources');
+//设置static中间件，使得可以直接请求静态文件
+app.use(express.static(path.join(__dirname, 'public')));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -10,8 +10,10 @@ const QuestionType = {
     INTEGRATED_WRITING_TYPE: 'integrated_writing',
     TPO_LISTENING_SINGLE_CHOICE_TYPE : 'tpo_listening_single_choice',
     TPO_LISTENING_MULTIPLE_CHOICE_TYPE : 'tpo_listening_multiple_choice',
-    TPO_LISTENING_REPEAT_QUESTION : 'tpo_listening_repeat_type'
-
+    TPO_LISTENING_REPEAT_QUESTION : 'tpo_listening_repeat_type',
+    TPO_SPEAKING_Q1Q2_QUESTION: 'tpo_speaking_q1q2_type',
+    TPO_SPEAKING_Q3Q4_QUESTION: 'tpo_speaking_q3q4_type',
+    TPO_SPEAKING_Q5Q6_QUESTION: 'tpo_speaking_q5q6_type'
 };
 
 module.exports.QuestionType = QuestionType;

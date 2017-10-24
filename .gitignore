@@ -1,3 +1,4 @@
 node_modules/
 .idea/
 const/secret.js
+public/uploads/

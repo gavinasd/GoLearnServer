@@ -13,6 +13,7 @@ var usersController = require('../controllers/usersController');
 var ctrlAuth = require('../controllers/authentication');
 var classController = require('../controllers/classController');
 var assignmentController = require('../controllers/assignmentController');
+let uploadController = require('../controllers/uploadController');
 
 //for test
 router.get('/user/:userId', auth, usersController.readOneUser);
@@ -56,6 +57,7 @@ router.post('/question/addScore',auth, assignmentController.addMarkingScoreToQue
 router.get('/assignment/:userId',auth,assignmentController.getAllAssignmentList);
 router.post('/assignment/createone', auth, assignmentController.createAssignment);
 router.get('/assignment/detail/:userId/:assignmentId',auth,assignmentController.findAssignmentGradeDetail);
+router.post('/upload/record',auth, uploadController.saveFile);
 
 router.post('/classes/addAssignments', auth, assignmentController.classAddAssignments);
 router.post('/classes/delAssignment/:userId', auth, assignmentController.classDelAssignment);

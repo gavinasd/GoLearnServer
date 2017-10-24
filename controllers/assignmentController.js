@@ -21,6 +21,7 @@ let VocabularyQuestion = mongoose.model('VocabularyQuestion');
 let IndependentWritingQuestion = mongoose.model('IndependentWritingQuestion');
 let IntegratedWritingQuestion = mongoose.model('IntegratedWritingQuestion');
 let TpoListeningQuestion = mongoose.model('TpoListeningQuestion');
+let TpoSpeakingQuestion = mongoose.model('TpoSpeakingQuestion');
 let Grade = mongoose.model('Grade');
 
 
@@ -229,6 +230,12 @@ module.exports.addQuestionToGroup = function(req, res){
             case mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION:
                 addTpoListeningQuestion(quest, res, assignment, groupId, userId);
                 break;
+            case mConst.QuestionType.TPO_SPEAKING_Q1Q2_QUESTION:
+            case mConst.QuestionType.TPO_SPEAKING_Q3Q4_QUESTION:
+            case mConst.QuestionType.TPO_SPEAKING_Q5Q6_QUESTION:
+                addTpoSpeakingQuestion(quest, res, assignment, groupId, userId);
+                break;
+
         }
 
     });
@@ -930,6 +937,33 @@ let addTpoListeningQuestion = function(quest, res, assignment, groupId, userId){
         question:question,
         type:type,
         options:options,
+        answer:answer,
+        explanation:explanation,
+        score:score
+    });
+    addQuestion(newQuestion, assignment, groupId, res);
+};
+
+/**
+ *
+ * 添加TPO口语题目
+ */
+let addTpoSpeakingQuestion = function(quest, res, assignment, groupId, userId){
+    let type = quest.questionType;
+    let recordUrl = quest.recordUrl;
+    let question = quest.question;
+    let passage = quest.passage;
+    let answer = quest.answer;
+    let score = quest.score;
+    let explanation = quest.explanation;
+
+    let newQuestion = new TpoSpeakingQuestion({
+        creator:userId,
+        questionType:type,
+        recordUrl:recordUrl,
+        question:question,
+        passage:passage,
+        type:type,
         answer:answer,
         explanation:explanation,
         score:score

@@ -72,3 +72,18 @@ var TPOListeningQuestionSchema = new mongoose.Schema({
     answer:String
 });
 var TpoListeningQuestion = Question.discriminator('TpoListeningQuestion', TPOListeningQuestionSchema);
+
+//TPO口语题
+var TPOSpeakingQuestionSchema = new mongoose.Schema({
+    //题目的录音地址
+    recordUrl:String,
+    //题目
+    question:String,
+    //阅读材料
+    passage:String,
+    //类型，tpo的口语题有几种类型，分别是Q1Q2，Q3Q4，Q5Q5
+    type:String,
+    //答案
+    answer:String
+});
+var TpoSpeakingQuestion = Question.discriminator('TpoSpeakingQuestion', TPOSpeakingQuestionSchema);
