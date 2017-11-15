@@ -12,6 +12,8 @@ const responseSchema = Schema({
 });
 
 const gradeSchema = new mongoose.Schema({
+    //班级ID
+    classId:{type:Schema.ObjectId, required:true},
     //学生ID
     studentId:{type:Schema.ObjectId, required:true},
     //作业ID

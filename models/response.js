@@ -10,7 +10,7 @@ const responseSchema = new mongoose.Schema({
 	//创建者
 	creator:{type:Schema.Types.ObjectId, ref:'User'},
 	//所属班级
-	class:{type:Schema.Types.ObjectId, ref:'Class'},
+	classId:{type:Schema.Types.ObjectId, ref:'Class'},
 	//所属作业
 	assignment:{type:Schema.Types.ObjectId, ref:'Assignment'},
 	//对应的问题

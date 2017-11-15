@@ -7,10 +7,12 @@ let ResponseToQuestion = mongoose.model("ResponseToQuestion");
 
 class Grade{
     constructor(
+        classId,
         studentId,
         studentName,
         assignmentId,
     ){
+        this.classId = classId;
         this.studentId = studentId;                 //学生ID
         this.studentName = studentName;             //学生名字
         this.assignmentId = assignmentId;           //作业的ID
@@ -51,7 +53,7 @@ module.exports.getStudentGradeByAssignment = function (req, res) {
             let assignmentGrade = Array.from([]);
 
             for(let student of studentList){
-                let grade = new Grade(student._id, student.name, assignment._id, 0, assignment.questionList.length);
+                let grade = new Grade(classId, student._id, student.name, assignment._id, 0, assignment.questionList.length);
                 ResponseToQuestion.find({
                         creator:student._id,
                         class:classId,

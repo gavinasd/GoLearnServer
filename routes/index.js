@@ -24,46 +24,49 @@ router.get('/user/:userId', auth, usersController.readOneUser);
 router.post('/register', ctrlAuth.register);
 router.post('/login', ctrlAuth.login);
 
+/**-----------------------------------------------------------------------
+ * 课程Class接口
+ **---------------------------------------------------------------------*/
+router.get('/classes/list/:userId', auth, classController.getClassListByUserId);
+router.post('/classes/create/:userId', auth, classController.createClassByUserId);
+router.get('/classes/detail/:classId/:userId', auth, classController.getClassDetailByClassId);
 //搜索班级
 router.get('/classes/search/:name', auth, classController.classSearchByName);
-router.get('/classes/user/:classId/:userId',auth,classController.classGetAllUser);
 
 //添加/删除 老师/学生
+router.get('/classes/user/:classId/:userId',auth,classController.classGetAllUser);
 router.post('/classes/addTeacher', auth, classController.classAddTeacher);
-router.post('/classes/delTeacher', auth, classController.classDelTeacher);
 router.post('/classes/addStudent', auth, classController.classAddStudent);
-router.post('/classes/delStudent', auth, classController.classDelStudent);
 
-//添加/删除/修改 课程表
-router.post('/classes/addSchedule/:userId', auth, classController.classAddScheduleList);
-router.post('/classes/delSchedule/:userId', auth, classController.classDelScheduleList);
-router.post('/classes/changeSchedule/:userId', auth, classController.classChangeScheduleList);
+//添加/获取 班级里面的作业列表
+router.post('/classes/addAssignment', auth, classController.addAssignmentToClass);
+router.get('/classes/getAssignmentList/:classId/:userId/:page', auth, classController.getAssignmentListInClass);
 
-//添加/删除/修改 作业
-router.get('/assignment/assignmentId/:assignmentId',auth,assignmentController.getAssignmentById);
-router.get('/assignment/info/:assignmentId/:studentId', auth, assignmentController.getAssignmentInfo);
-router.put('/assignment/done', auth, assignmentController.submitAssignmentDone);
+/**-----------------------------------------------------------------------
+ * 作业assignment接口
+ **---------------------------------------------------------------------*/
+
+//获取作业
+router.get('/assignment/id/:assignmentId',auth,assignmentController.getAssignmentById);
+router.get('/assignment/:userId',auth,assignmentController.getAllAssignmentList);
+
+//获取学生的做题信息，学生提交作业
+router.get('/assignment/info/:classId/:assignmentId/:studentId', auth, assignmentController.getAssignmentInfo);
 router.post('/assignment/info', auth, assignmentController.submitAssignmentInfo);
-router.post('/classes/addAssignment', auth, assignmentController.classAddAssignment);
+router.put('/assignment/done', auth, assignmentController.submitAssignmentDone);
+
+//编辑一份新的作业，包括创建作业，添加group，添加question，更新groupContent
+router.post('/assignment/create', auth, assignmentController.createAssignment);
 router.post('/assignment/addQuestionGroup', auth, assignmentController.addQuestionGroupToAssignment);
 router.post('/classes/addQuestion',auth, assignmentController.addQuestionToGroup);
 router.put('/assignment/content', auth, assignmentController.updateQuestionGroupContent);
-router.get('/classes/getAssignmentList/:classId/:userId/:page', auth, assignmentController.classGetAssignmentList);
+
 router.get('/question/markingScore/:userId/:assignmentId', auth, assignmentController.getMarkingScore);
 router.get('/question/spendTime/:userId/:assignmentId', auth, assignmentController.getSpendTime);
 router.get('/question/group/:assignmentId/:questionGroupId',auth,assignmentController.getQuestionGroupById);
-router.post('/question/addResponse',auth,assignmentController.addResponseToQuestion);
-router.post('/question/addScore',auth, assignmentController.addMarkingScoreToQuestion);
-router.get('/assignment/:userId',auth,assignmentController.getAllAssignmentList);
-router.post('/assignment/createone', auth, assignmentController.createAssignment);
-router.get('/assignment/detail/:userId/:assignmentId',auth,assignmentController.findAssignmentGradeDetail);
 router.post('/upload/record',auth, uploadController.saveFile);
 
-router.post('/classes/addAssignments', auth, assignmentController.classAddAssignments);
-router.post('/classes/delAssignment/:userId', auth, assignmentController.classDelAssignment);
-router.post('/classes/delAssignments/:userId', auth, assignmentController.classDelAssignments);
-router.post('/classes/changeAssignment/:userId', auth, assignmentController.classChangeAssignment);
-router.post('/classes/changeAssignments/:userId', auth, assignmentController.classChangeAssignments);
+
 
 
 //添加/删除/下载 课堂资源
@@ -72,12 +75,7 @@ router.get('/classes/getResource/:classId', auth, classController.classGetResour
 router.delete('/classes/deleteResource/:userId', auth, classController.classDeleteResource);
 router.get('/classes/downloadResource/:resourceId',classController.downloadResource);
 
-/**-----------------------------------------------------------------------
- * 课程Class接口
- **---------------------------------------------------------------------*/
-router.get('/classes/:userId', auth, classController.getClassListByUserId);
-router.post('/classes/:userId', auth, classController.createClassByUserId);
-router.get('/classes/detail/:classId/:userId', auth, classController.getClassDetailByClassId);
+
 
 
 module.exports = router;

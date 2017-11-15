@@ -65,9 +65,9 @@ module.exports.classAddAssignment = function (mClass,assignmentId) {
     })
 };
 
-module.exports.findGrade = function (studentId, assignmentId) {
+module.exports.findGrade = function (classId, studentId, assignmentId) {
     return new Promise(function(resolve, reject){
-        Grade.findOne({'studentId':studentId,'assignmentId':assignmentId})
+        Grade.findOne({'classId':classId, 'studentId':studentId, 'assignmentId':assignmentId})
             .exec(function (err, grade) {
                 if(err){
                     throw('数据库查找有误');
@@ -95,7 +95,8 @@ module.exports.insertResponse = function (response) {
     return new Promise((resolve, reject)=>{
         //如果已经存在了这次回答，那么只需要更新一下content即可
         //否则会出现同一人对同一题的多次回答
-        ResponseToQuestion.findOne({'creator':response.creator,'question':response.question})
+        ResponseToQuestion
+            .findOne({'creator':response.creator, 'question':response.question, 'classId':response.classId})
             .exec(function(err,oldResponse){
                 if(err){
                     console.error("insertResponse,err:"+err);
@@ -122,11 +123,12 @@ module.exports.insertResponse = function (response) {
                             reject({error:err});
                         } else{
                             //如果这是一个新的response，那么则意味着grade的responseList中没有这个数据
+                            const classId = response.classId;
                             const questionId = response.question;
                             const assignmentId = response.assignment;
                             const userId = response.creator;
 
-                            Grade.findOne({'studentId':userId,'assignmentId':assignmentId})
+                            Grade.findOne({'classId':classId, 'studentId':userId,'assignmentId':assignmentId})
                                 .exec(function (err, grade) {
                                     if(err){
                                         throw('数据库查找有误');
@@ -142,6 +144,7 @@ module.exports.insertResponse = function (response) {
                                             //没有这个grade，所以创建一个
                                             console.log('没有这个grade，创建一下');
                                             grade = new Grade();
+                                            grade.classId = classId;
                                             grade.studentId = userId;
                                             grade.assignmentId = assignmentId;
                                             grade.responseList.push({
@@ -210,7 +213,9 @@ module.exports.insertQuestion = function(newQuestion, assignment){
 
 module.exports.findClassListByUser = function(userId){
     return new Promise((resolve, reject)=>{
-        Class.find({$or:[{studentList:userId},{teacherList:userId}]},function (err, classes) {
+        Class.find({$or:[{studentList:userId},{teacherList:userId}]})
+            .populate({path:'teacherList'})
+            .exec(function (err, classes) {
             if(err){
                 reject(err);
             } else {
@@ -276,9 +281,9 @@ module.exports.findAssignmentById = function (assignmentId, populationOps){
     })
 };
 
-module.exports.findResponse = function(userId, questionId){
+module.exports.findResponse = function(classId, userId, questionId){
     return new Promise((resolve,reject)=>{
-        ResponseToQuestion.findOne({creator:userId,question:questionId})
+        ResponseToQuestion.findOne({creator:userId,classId:classId,question:questionId})
             .populate({path:'question'})
             .exec((err, question)=>{
                 if(err){

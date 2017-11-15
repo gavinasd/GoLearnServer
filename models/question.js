@@ -22,7 +22,7 @@ var Question = mongoose.model('Question', questionSchema);
 //tpo阅读题目
 var tpoReadingQuestionSchema = new mongoose.Schema({
 	//tpo的文章
-	passage:String,
+	paragraph:Number,
 	//题目
 	question:String,
 	//选项
