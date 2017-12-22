@@ -92,7 +92,7 @@ classSchema.methods.isAssignmentIn = function(mAssignmentId){
 		if(assignment._id){
 			return assignment._id.toString() == mAssignmentId.toString();
 		}
-		return assignmentId.toString() == mAssignmentId.toString();
+		return assignment.toString() == mAssignmentId.toString();
 	});
 	console.log(array);
 	return array.length > 0;

@@ -91,6 +91,20 @@ module.exports.findQuestionById = function(questionId){
     });
 };
 
+module.exports.saveQuestion = function (question) {
+    return new Promise((resolve, reject)=>{
+        question.save(function (err, updatedQuestion) {
+            if(err){
+                log.error("save Question, err:"+err);
+                reject({error:err});
+            }
+            else {
+                resolve(updatedQuestion);
+            }
+        });
+    });
+};
+
 module.exports.insertResponse = function (response) {
     return new Promise((resolve, reject)=>{
         //如果已经存在了这次回答，那么只需要更新一下content即可
@@ -177,35 +191,6 @@ module.exports.insertGrade = function(grade){
                 reject({error:err});
             } else{
                 resolve(grade);
-            }
-        });
-    });
-};
-
-/**
- * 存储一个新的question，同时也要修改assignment
- * @param newQuestion
- * @param assignment
- * @returns {Promise.}
- */
-module.exports.insertQuestion = function(newQuestion, assignment){
-    return new Promise((resolve, reject)=>{
-        newQuestion.save(function (err) {
-            if(err){
-                console.error("insertQuestion,err:"+err);
-                reject(err);
-            } else {
-                //更新assignment的列表
-                assignment.questionList.push(newQuestion);
-                assignment.totalScore += newQuestion.score;
-                assignment.save((err)=>{
-                    if(err){
-                        console.error("insertQuestion,err:"+err);
-                        reject(err);
-                    } else{
-                        resolve(newQuestion, assignment);
-                    }
-                });
             }
         });
     });
@@ -310,6 +295,20 @@ module.exports.createAssignment = function(assignment){
     });
 };
 
+module.exports.saveAssignment = function(assignment) {
+    return new Promise((resolve, reject) => {
+        assignment.save(function (err) {
+            if (err) {
+                log.error(err);
+                reject(err);
+            }
+            else {
+                resolve(assignment);
+            }
+        });
+    });
+}
+
 module.exports.createQuestionGroup = function (questionGroup) {
     return new Promise((resolve, reject)=>{
         questionGroup.save(function(err){
@@ -350,7 +349,7 @@ module.exports.insertQuestionGroupToAssignment = function(assignmentId, question
     });
 };
 
-module.exports.insertQuestionToGroup = function(newQuestion, assignment, groupId){
+module.exports.insertQuestionToGroup = function(newQuestion, assignment, groupId, index){
     return new Promise((resolve, reject)=>{
         newQuestion.save(function (err) {
             if(err){
@@ -364,7 +363,11 @@ module.exports.insertQuestionToGroup = function(newQuestion, assignment, groupId
                 }
                 else{
                     //更新assignment的列表
-                    questionGroup.questionList.push(newQuestion);
+                    if(!index || index < 0 || index > questionGroup.questionList.length){
+                        questionGroup.questionList.push(newQuestion);
+                    } else {
+                        questionGroup.questionList.splice(index, 0, newQuestion);
+                    }
                     questionGroup.totalScore += newQuestion.score;
                     assignment.save((err)=>{
                         if(err){
@@ -405,5 +408,37 @@ module.exports.updateQuestionGroupContent = function (assignmentId, groupId, con
 
         });
 
+    });
+};
+
+module.exports.deleteQuestion = function(assignment, question){
+    return new Promise((resolve, reject)=>{
+        Question.remove({"_id":question._id}, function (err) {
+            if(err){
+                console.error("deleteQuestion, err:"+err);
+                reject({error: err});
+            }
+            else {
+                assignment.questionGroupList = assignment.questionGroupList
+                    .map(group => {
+                        if(!group.questionList.indexOf(question._id) > 0){
+                            return group;
+                        }
+                        else {
+                            group.questionList.remove(question._id);
+                            group.totalScore = group.totalScore - question.score;
+                            return group;
+                        }
+                    });
+                assignment.save(err => {
+                    if(err){
+                        console.error("deleteQuestion, err:"+err);
+                        reject(err);
+                    } else{
+                        resolve(assignment);
+                    }
+                });
+            }
+        });
     });
 };

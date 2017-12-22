@@ -36,10 +36,6 @@ module.exports.getAssignmentById = function(req,res){
 
     mongooseHelper.findAssignmentById(assignmentId, {path:'questionGroupList.questionList'})
         .then((assignment)=>{
-            for(let question of assignment.questionGroupList[0].questionList){
-                console.log(question);
-            }
-
             util.sendJSONresponse(res, 200, assignment);
         }, (err)=>{
             util.sendJSONresponse(res, 404 , {
@@ -267,7 +263,7 @@ module.exports.createAssignment = function(req, res){
         .then(
             ()=> {
                 util.sendJSONresponse(res, 200 , {
-                    'questionGroup': newAssignment
+                    'assignment': newAssignment
                 });
             },
             (err)=>{
@@ -318,11 +314,12 @@ module.exports.addQuestionGroupToAssignment = function (req, res) {
  * 添加题目到questionGroup中
  */
 module.exports.addQuestionToGroup = function(req, res){
-    let assignmentId = req.body.assignmentId;
-    let groupId = req.body.groupId;
-    let quest = req.body.question;
-    let userId = quest.creator;
-    let questionType = quest.questionType;
+    const assignmentId = req.body.assignmentId;
+    const groupId = req.body.groupId;
+    const quest = req.body.question;
+    const userId = quest.creator;
+    const questionType = quest.questionType;
+    const index = req.body.index;
 
     console.log(assignmentId,groupId,userId,questionType);
 
@@ -350,26 +347,27 @@ module.exports.addQuestionToGroup = function(req, res){
             case mConst.QuestionType.TPO_READING_SINGLE_CHOICE_TYPE:
             case mConst.QuestionType.TPO_READING_INSERT_CHOICE_TYPE:
             case mConst.QuestionType.TPO_READING_TOPIC_TYPE:
-                addTpoReadingQuestion(quest, res, assignment, groupId, userId);
+                addTpoReadingQuestion(quest, res, assignment, groupId, userId, index);
                 break;
             case mConst.QuestionType.VOCABULARY_TYPE:
-                addVocabularyQuestion(quest, res, assignment, groupId,userId);
+                addVocabularyQuestion(quest, res, assignment, groupId,userId, index);
                 break;
             case mConst.QuestionType.INDEPENDENT_WRITING_TYPE:
-                addIndependentWritingQuestion(quest, res, assignment, groupId, userId);
+                addIndependentWritingQuestion(quest, res, assignment, groupId, userId, index);
                 break;
             case mConst.QuestionType.INTEGRATED_WRITING_TYPE:
-                addIntegratedWritingQuestion(quest, res, assignment, groupId, userId);
+                addIntegratedWritingQuestion(quest, res, assignment, groupId, userId, index);
                 break;
             case mConst.QuestionType.TPO_LISTENING_SINGLE_CHOICE_TYPE:
             case mConst.QuestionType.TPO_LISTENING_MULTIPLE_CHOICE_TYPE:
             case mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION:
-                addTpoListeningQuestion(quest, res, assignment, groupId, userId);
+            case mConst.QuestionType.TPO_LISTENING_TABLE_CHOICE_QUESTION:
+                addTpoListeningQuestion(quest, res, assignment, groupId, userId, index);
                 break;
             case mConst.QuestionType.TPO_SPEAKING_Q1Q2_QUESTION:
             case mConst.QuestionType.TPO_SPEAKING_Q3Q4_QUESTION:
             case mConst.QuestionType.TPO_SPEAKING_Q5Q6_QUESTION:
-                addTpoSpeakingQuestion(quest, res, assignment, groupId, userId);
+                addTpoSpeakingQuestion(quest, res, assignment, groupId, userId, index);
                 break;
 
         }
@@ -405,6 +403,162 @@ module.exports.updateQuestionGroupContent = function(req, res){
         });
 };
 
+/**
+ * 改变已有的question里面的内容
+ */
+module.exports.updateQuestion = function(req, res){
+    const questionId = req.body.questionId;
+    const userId = req.body.userId;
+    const quest = req.body.question;
+
+    if(!questionId || !userId ){
+        util.errorWithParameters(res);
+        return 0;
+    }
+
+    mongooseHelper.findQuestionById(questionId)
+        .then((question)=>{
+            if(question.creator != userId){
+                util.sendJSONresponse(res, 404, {
+                    "errmsg":"修改失败，你没权修改这个题目"
+                });
+                return;
+            }
+
+            for(let key of Object.keys(quest)){
+                question[key] = quest[key];
+            }
+            return mongooseHelper.saveQuestion(question);
+        })
+        .then((question)=>{
+            util.sendJSONresponse(res, 200, {
+                'question':question
+            });
+        })
+        .catch((err)=>{
+            log.error(err);
+            util.sendJSONresponse(res, 404, {
+                "errmsg":err
+            });
+        });};
+
+
+/**
+ * 删除掉一个group
+ */
+module.exports.deleteGroup = function(req, res){
+    console.log("*****delete group");
+    const assignmentId = req.params.assignmentId;
+    const groupId = req.params.groupId;
+    const userId = req.params.userId;
+    let thatAssignment;
+
+    if(!assignmentId || !groupId || !userId){
+        util.errorWithParameters(res);
+    }
+
+    mongooseHelper.findAssignmentById(assignmentId, {path:'questionGroupList.questionList'})
+        .then(assignment => {
+            if(assignment.creator != userId) {
+                util.sendJSONresponse(res, 404, {
+                    "errmsg": '你无权删除这个题目'
+                });
+                return;
+            }
+
+            if(!assignment.isGroupIn(groupId)){
+                console.log('cannot contain');
+                util.sendJSONresponse(res, 404, {
+                    "errmsg": "参数错误"
+                });
+                return ;
+            }
+
+            thatAssignment = assignment;
+            let results = assignment.questionGroupList.id(groupId).questionList
+                .map(question => {
+                    return mongooseHelper.deleteQuestion(assignment, question);
+                });
+            return Promise.all(results);
+        })
+        .then(() => {
+            thatAssignment.questionGroupList = thatAssignment.questionGroupList.filter(item =>{
+                return item._id.toString() !== groupId;
+            });
+            console.log(thatAssignment);
+            return mongooseHelper.saveAssignment(thatAssignment);
+        })
+        .then(assignment => {
+            util.sendJSONresponse(res, 200, {
+                "assignment" : assignment
+            })
+        })
+        .catch((err)=>{
+            log.error(err);
+            util.sendJSONresponse(res, 404, {
+                "errmsg":err
+            });
+        });
+};
+
+
+/**
+ * 删除掉一个题目
+ */
+module.exports.deleteQuestion = function(req, res){
+    console.log("******delete question");
+    const assignmentId = req.params.assignmentId;
+    const questionId = req.params.questionId;
+    const userId = req.params.userId;
+    let thatAssignment;
+
+    if(!assignmentId || !questionId ||!userId){
+        util.errorWithParameters(res);
+        return;
+    }
+
+    mongooseHelper.findAssignmentById(assignmentId)
+        .then(assignment => {
+            if(assignment.creator != userId) {
+                util.sendJSONresponse(res, 404, {
+                    "errmsg": '你无权删除这个题目'
+                });
+                return;
+            }
+
+            if(!assignment.isQuestionIn(questionId)){
+                util.sendJSONresponse(res, 404, {
+                    "errmsg": "参数错误"
+                });
+                return ;
+            }
+
+            thatAssignment = assignment;
+            return mongooseHelper.findQuestionById(questionId);
+        })
+        .then(question => {
+            if(question.creator != userId ){
+                util.sendJSONresponse(res, 404, {
+                    "errmsg": '你无权删除这个题目'
+                });
+                return;
+            }
+
+            return mongooseHelper.deleteQuestion(thatAssignment, question);
+        })
+        .then(assignment => {
+            util.sendJSONresponse(res, 200, {
+                "assignment" : assignment
+            })
+        })
+        .catch((err)=>{
+            log.error(err);
+            util.sendJSONresponse(res, 404, {
+                "errmsg":err
+            });
+        });
+};
+
 module.exports.getQuestionGroupById = function (req, res) {
     let assignmentId = req.params.assignmentId;
     let groupId = req.params.questionGroupId;
@@ -423,8 +577,6 @@ module.exports.getQuestionGroupById = function (req, res) {
             });
         });
 };
-
-
 
 module.exports.getMarkingScore = function (req, res) {
     console.log("********getting score");
@@ -532,9 +684,9 @@ module.exports.removeAssignmentFromClass = function(req, res){
 };
 
 
-let addQuestion = function (newQuestion, assignment, groupId, res){
+let addQuestion = function (newQuestion, assignment, groupId, res, index){
     mongooseHelper
-        .insertQuestionToGroup(newQuestion,assignment, groupId)
+        .insertQuestionToGroup(newQuestion,assignment, groupId, index)
         .then((newQuestion, assignment)=>{
             util.sendJSONresponse(res,200, {
                 'question':newQuestion,
@@ -552,7 +704,7 @@ let addQuestion = function (newQuestion, assignment, groupId, res){
 /**
  * 添加tpo阅读题目
  */
-let addTpoReadingQuestion = function (quest, res, assignment, groupId, userId) {
+let addTpoReadingQuestion = function (quest, res, assignment, groupId, userId, index) {
     let paragraph = quest.paragraph;
     let question = quest.question;
     let options = quest.options;
@@ -571,13 +723,13 @@ let addTpoReadingQuestion = function (quest, res, assignment, groupId, userId) {
         explanation:explanation,
         score:score
     });
-    addQuestion(newQuestion, assignment, groupId, res);
+    addQuestion(newQuestion, assignment, groupId, res, index);
 };
 
 /**
  * 添加单词题目
  */
-let addVocabularyQuestion = function (quest, res, assignment, groupId, userId){
+let addVocabularyQuestion = function (quest, res, assignment, groupId, userId, index){
     let question = quest.question;
     let answer = quest.answer;
     let score = quest.score;
@@ -590,33 +742,33 @@ let addVocabularyQuestion = function (quest, res, assignment, groupId, userId){
         score:score
     });
 
-    addQuestion(newQuestion, assignment, groupId, res);
+    addQuestion(newQuestion, assignment, groupId, res, index);
 };
 
 
 /**
  * 添加独立写作题目
  */
-let addIndependentWritingQuestion = function (quest, res, assignment, groupId, userId){
+let addIndependentWritingQuestion = function (quest, res, assignment, groupId, userId, index){
     let question = quest.question;
     let answer = quest.answer;
     let score = quest.score;
 
     let newQuestion = new IndependentWritingQuestion({
         creator:userId,
-        questionType:mConst.QuestionType.INDEPEDENT_WRITING_TYPE,
+        questionType:mConst.QuestionType.INDEPENDENT_WRITING_TYPE,
         question:question,
         answer:answer,
         score:score
     });
 
-    addQuestion(newQuestion, assignment, groupId, res);
+    addQuestion(newQuestion, assignment, groupId, res, index);
 };
 
 /**
  * 添加综合写作题目
  */
-let addIntegratedWritingQuestion = function(quest, res, assignment, groupId, userId){
+let addIntegratedWritingQuestion = function(quest, res, assignment, groupId, userId, index){
     let answer = quest.answer;
     let score = quest.score;
 
@@ -627,14 +779,14 @@ let addIntegratedWritingQuestion = function(quest, res, assignment, groupId, use
         score: score
     });
 
-    addQuestion(newQuestion, assignment, groupId, res);
+    addQuestion(newQuestion, assignment, groupId, res, index);
 };
 
 /**
  *
  * 添加TPO听力题目
  */
-let addTpoListeningQuestion = function(quest, res, assignment, groupId, userId){
+let addTpoListeningQuestion = function(quest, res, assignment, groupId, userId, index){
     let recordUrl = quest.recordUrl;
     let question = quest.question;
     let type = quest.questionType;
@@ -654,14 +806,14 @@ let addTpoListeningQuestion = function(quest, res, assignment, groupId, userId){
         explanation:explanation,
         score:score
     });
-    addQuestion(newQuestion, assignment, groupId, res);
+    addQuestion(newQuestion, assignment, groupId, res, index);
 };
 
 /**
  *
  * 添加TPO口语题目
  */
-let addTpoSpeakingQuestion = function(quest, res, assignment, groupId, userId){
+let addTpoSpeakingQuestion = function(quest, res, assignment, groupId, userId, index){
     let type = quest.questionType;
     let recordUrl = quest.recordUrl;
     let question = quest.question;
@@ -681,7 +833,7 @@ let addTpoSpeakingQuestion = function(quest, res, assignment, groupId, userId){
         explanation:explanation,
         score:score
     });
-    addQuestion(newQuestion, assignment, groupId, res);
+    addQuestion(newQuestion, assignment, groupId, res, index);
 };
 
 let returnQuestionResponse = function(userId, questionIdList){
@@ -795,6 +947,7 @@ const updateStudentAnswer = function (classId, assignmentId, questionId, student
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_SINGLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_MULTIPLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION
+                || question.questionType == mConst.QuestionType.TPO_LISTENING_TABLE_CHOICE_QUESTION
             ){
                 let score = (question.answer == studentAnswer)?question.score:0;
                 return addMarkingScore(classId,assignmentId,questionId, studentId, score);

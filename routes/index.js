@@ -58,8 +58,11 @@ router.put('/assignment/done', auth, assignmentController.submitAssignmentDone);
 //编辑一份新的作业，包括创建作业，添加group，添加question，更新groupContent
 router.post('/assignment/create', auth, assignmentController.createAssignment);
 router.post('/assignment/addQuestionGroup', auth, assignmentController.addQuestionGroupToAssignment);
-router.post('/classes/addQuestion',auth, assignmentController.addQuestionToGroup);
+router.post('/assignment/addQuestion',auth, assignmentController.addQuestionToGroup);
 router.put('/assignment/content', auth, assignmentController.updateQuestionGroupContent);
+router.put('/assignment/updateQuestion',auth, assignmentController.updateQuestion);
+router.delete('/assignment/deleteGroup/:assignmentId/:groupId/:userId', auth, assignmentController.deleteGroup);
+router.delete('/assignment/deleteQuestion/:assignmentId/:questionId/:userId', auth, assignmentController.deleteQuestion);
 
 router.get('/question/markingScore/:userId/:assignmentId', auth, assignmentController.getMarkingScore);
 router.get('/question/spendTime/:userId/:assignmentId', auth, assignmentController.getSpendTime);

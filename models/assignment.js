@@ -41,6 +41,12 @@ var assignmentSchema = new mongoose.Schema({
 	deadline:{type:Date}
 });
 
+assignmentSchema.methods.isGroupIn = function (groupId) {
+    return this.questionGroupList.filter((group) =>{
+        return group._id.toString() == groupId.toString();
+    }).length > 0;
+};
+
 assignmentSchema.methods.isQuestionIn = function (questionId){
 	return this.questionGroupList.filter(function (questionGroup) {
 	    //看看每个questionGroup里面是否含有这个question

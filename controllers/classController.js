@@ -67,6 +67,14 @@ module.exports.getClassListByUserId = function (req, res) {
 
 		mongooseHelper.findClassListByUser(user._id)
             .then((classes)=>{
+		        classes = classes.map((mClass) =>{
+		            mClass.teacherList = mClass.teacherList.map(teacher =>{
+		                return {
+		                    "nickName": teacher.nickName
+                        }
+                    });
+                    return mClass;
+                });
                 util.sendJSONresponse(res, 200 , {
                     "count":classes.length,
                     "classes":classes
@@ -450,6 +458,13 @@ module.exports.addAssignmentToClass = function (req, res) {
                 return 0;
             }
 
+            if(thisClass.isAssignmentIn(assignmentId)){
+                util.sendJSONresponse(res, 404, {
+                    "errmsg":"你已经添加过这个作业"
+                });
+                return 0;
+            }
+
             return mongooseHelper.classAddAssignment(thisClass,assignmentId);
         })
         .then((mClass)=>{
@@ -486,7 +501,7 @@ module.exports.getAssignmentListInClass = function (req, res) {
         .findClassById(classId,{path:'assignmentList studentList'})
         .then(function (mClass) {
             let assignmentList = [];
-            if((page-1)*5>=mClass.assignmentList.length){
+            if((page-1)*5>mClass.assignmentList.length){
                 //如果这时候选择的页码已经超出边界
                 assignmentList = mClass.assignmentList.reverse();
             }
@@ -679,12 +694,8 @@ let returnAssignmentListToTeacher = function (classId, studentIdList, assignment
 };
 
 let returnAssignmentListToStudent = function (classId, studentList, assignmentList) {
-    log.info('assignmentList',JSON.stringify(assignmentList));
     let student = studentList[0];
     let results = assignmentList.map(function (assignment) {
-        log.info('studentId',student._id);
-        log.info('assignmentId',assignment._id);
-
         return mongooseHelper.findGrade(classId, student._id,assignment._id)
             .then(grade=>assembleGradeInfo(classId, grade,assignment,student._id,student.nickName, student.avatar))
             .then((gradeInfo)=>{

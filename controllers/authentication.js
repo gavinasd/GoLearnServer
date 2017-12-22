@@ -6,14 +6,7 @@ var util = require('../util/util');
 module.exports.register = function (req, res) {
 	console.log("registering");
 	console.log("********");
-	console.log(req.body);
-	console.log(req.body.email);
-	console.log(req.body.password);
-	console.log(req.body.nickName);
-	console.log(req.body.userType);
-
 	if(!req.body || !req.body.email || !req.body.password || !req.body.nickName || !req.body.userType) {
-	    console.log("sldkfjlskdjf");
 	    util.errorWithParameters(res);
 		return;
 	}
@@ -55,7 +48,8 @@ module.exports.register = function (req, res) {
 };
 
 module.exports.login = function (req, res) {
-	console.log('login',"email:"+req.body.email);
+	console.log('login'+req.body.email);
+
 	if(!req.body.email || !req.body.password){
 		util.errorWithParameters(res);
 	}
@@ -72,10 +66,13 @@ module.exports.login = function (req, res) {
 				"token":token,
 				"id":user._id,
 				"userType":user.userType,
-                "userName":user.nickName
+                "userName":user.nickName,
+                "avatar":user.avatar
             });
 		} else {
-			util.sendJSONresponse(res,401,info);
+			util.sendJSONresponse(res,401,{
+			    "errmsg":"邮箱或密码错误"
+            });
 		}
 	})(req,res);
 };
