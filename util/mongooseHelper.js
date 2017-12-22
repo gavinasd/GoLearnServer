@@ -213,11 +213,13 @@ module.exports.findClassListByUser = function(userId){
 module.exports.searchClassByName = function(className){
     return new Promise((resolve,reject)=>{
         let regExp = new RegExp('.*?'+className+'.*?','i');
-        Class.find({name:regExp},function(err,mClasses){
-            if(err){
-                reject(err);
-            }
-            resolve(mClasses);
+        Class.find({name:regExp})
+            .populate({path:'teacherList'})
+            .exec(function(err,mClasses){
+                if(err){
+                    reject(err);
+                }
+                resolve(mClasses);
         })
     })
 };
