@@ -336,7 +336,8 @@ module.exports.insertQuestionGroupToAssignment = function(assignmentId, question
                     reject("找不到这个作业")
                 }
                 else {
-                    assignment.questionGroupList.push(questionGroup);
+                    assignment.questionGroupList = assignment.questionGroupList.concat([questionGroup]);
+                    console.log("adding-question-group ****"+ questionGroup);
                     let length = assignment.questionGroupList.length;
                     assignment.save((err)=>{
                         if(err){

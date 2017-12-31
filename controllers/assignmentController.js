@@ -296,6 +296,7 @@ module.exports.addQuestionGroupToAssignment = function (req, res) {
         'totalScore':0
     };
 
+
     mongooseHelper.insertQuestionGroupToAssignment(assignmentId, questionGroup)
         .then((questionGroup)=>{
             util.sendJSONresponse(res, 200, {
@@ -460,18 +461,10 @@ module.exports.deleteGroup = function(req, res){
     mongooseHelper.findAssignmentById(assignmentId, {path:'questionGroupList.questionList'})
         .then(assignment => {
             if(assignment.creator != userId) {
-                util.sendJSONresponse(res, 404, {
-                    "errmsg": '你无权删除这个题目'
-                });
-                return;
+                throw ("你无权删除这个题目");
             }
-
             if(!assignment.isGroupIn(groupId)){
-                console.log('cannot contain');
-                util.sendJSONresponse(res, 404, {
-                    "errmsg": "参数错误"
-                });
-                return ;
+                throw ("参数错误");
             }
 
             thatAssignment = assignment;
