@@ -77,10 +77,10 @@ module.exports.getStudentGradeByAssignment = function (req, res) {
                        }
                     });
 
-                assignmentGrade.push(grade);
+                assignmentGrade.concat([grade]);
             }
 
-            assignmentGradeList.push(assignmentGrade);
+            assignmentGradeList.concat([assignmentGrade]);
         }
 
         util.sendJSONresponse(res, 200 , {

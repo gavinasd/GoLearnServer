@@ -73,7 +73,7 @@ assignmentSchema.methods.getQuestionList = function(){
     let questionList= Array();
     for(let questionGroup of this.questionGroupList){
         for(let question of questionGroup.questionList){
-            questionList.push(question);
+            questionList.concat([question]);
         }
     }
     return questionList;

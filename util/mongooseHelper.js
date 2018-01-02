@@ -55,7 +55,7 @@ module.exports.findClass = function(query, populationOps){
 
 module.exports.classAddAssignment = function (mClass,assignmentId) {
     return new Promise((resolve,reject)=>{
-        mClass.assignmentList.push(assignmentId);
+        mClass.assignmentList.concat([assignmentId]);
         mClass.save(function(err){
             if(err){
                 reject(err);
@@ -148,11 +148,10 @@ module.exports.insertResponse = function (response) {
                                         throw('数据库查找有误');
                                     } else {
                                         if(grade){
-                                            grade.responseList.push({
+                                            grade.responseList.concat([{
                                                 'questionId': questionId,
                                                 'score': -1
-                                            });
-
+                                            }]);
                                         }
                                         else {
                                             //没有这个grade，所以创建一个
@@ -161,10 +160,10 @@ module.exports.insertResponse = function (response) {
                                             grade.classId = classId;
                                             grade.studentId = userId;
                                             grade.assignmentId = assignmentId;
-                                            grade.responseList.push({
+                                            grade.responseList.concat([{
                                                 'questionId': questionId,
                                                 'score': -1
-                                            });
+                                            }]);
                                         }
 
                                         grade.save(function(err){
@@ -367,7 +366,7 @@ module.exports.insertQuestionToGroup = function(newQuestion, assignment, groupId
                 else{
                     //更新assignment的列表
                     if(!index || index < 0 || index > questionGroup.questionList.length){
-                        questionGroup.questionList.push(newQuestion);
+                        questionGroup.questionList.concat([newQuestion]);
                     } else {
                         questionGroup.questionList.splice(index, 0, newQuestion);
                     }

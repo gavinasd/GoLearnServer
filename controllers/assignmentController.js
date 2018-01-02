@@ -179,15 +179,15 @@ module.exports.submitAssignmentInfo = function(req, res){
 
         if(studentAnswer) {
             let updateAnswer = updateStudentAnswer(classId, assignmentId, questionId, studentId, studentAnswer);
-            taskList.push(updateAnswer);
+            taskList.concat([updateAnswer]);
         }
         if(spendTime) {
             let updateSpendTime = updateGradeSpendTime(classId, assignmentId, studentId, spendTime);
-            taskList.push(updateSpendTime);
+            taskList.concat([updateSpendTime]);
         }
         if(markScore) {
             let updateMarkScore = addMarkingScore(classId, assignmentId, questionId, studentId, markScore);
-            taskList.push(updateMarkScore);
+            taskList.concat([updateMarkScore]);
         }
 
         return Promise.all(taskList);
@@ -890,10 +890,10 @@ const getMarkScore = function(grade) {
         let scoreList = new Array();
         log.info(grade.responseList);
         for(let mResponse of grade.responseList){
-            scoreList.push({
+            scoreList.concat([{
                 'questionId': mResponse.questionId,
                 'score': mResponse.score
-            })
+            }]);
         }
         return scoreList;
     }
@@ -987,10 +987,10 @@ const addMarkingScore = function (classId, assignmentId,questionId,userId,score)
                 //如果没有出现过这个response
                 if(hasResponse == 0) {
                     console.log("没有这个response，score设置成"+score);
-                    grade.responseList.push({
+                    grade.responseList.concat([{
                         'questionId': questionId,
                         'score': score
-                    });
+                    }]);
                 }
             }
             else {
@@ -1000,10 +1000,10 @@ const addMarkingScore = function (classId, assignmentId,questionId,userId,score)
                 grade.classId = classId;
                 grade.studentId = userId;
                 grade.assignmentId = assignmentId;
-                grade.responseList.push({
+                grade.responseList.concat([{
                     'questionId': questionId,
                     'score': score
-                });
+                }]);
             }
             return mongooseHelper.insertGrade(grade);
         });

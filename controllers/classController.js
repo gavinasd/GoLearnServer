@@ -269,7 +269,7 @@ module.exports.classAddStudent = function (req, res) {
         }
 
         if(!mClass.isStudentIn(studentId)){
-            mClass.studentList.push(studentId);
+            mClass.studentList.concat([studentId]);
             mClass.save(function (err) {
                 if(err){
                     util.handleSavingError(res, err);
@@ -345,7 +345,7 @@ module.exports.classAddTeacher = function (req, res) {
         }
 
         if(!mClass.isTeacherIn(teacherId)){
-            mClass.teacherList.push(teacherId);
+            mClass.teacherList.concat([teacherId]);
             mClass.save(function (err) {
                 if(err){
                     util.handleSavingError(res, err);
@@ -624,7 +624,7 @@ module.exports.classAddResource = function(req, res){
 			newResource.save(function (err) {
 				util.handleSavingError(res,err);
 
-				mClass.resourceList.push(newResource);
+				mClass.resourceList.concat([newResource]);
 				mClass.save(function(err){util.handleSavingError(res,err)});
 				util.sendJSONresponse(res, 200 , {
 					"res":newResource
