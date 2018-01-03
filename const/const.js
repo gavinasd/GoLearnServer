@@ -12,6 +12,7 @@ const QuestionType = {
     TPO_LISTENING_MULTIPLE_CHOICE_TYPE : 'tpo_listening_multiple_choice',
     TPO_LISTENING_REPEAT_QUESTION : 'tpo_listening_repeat_type',
     TPO_LISTENING_TABLE_CHOICE_QUESTION: 'tpo_listening_table_choice',
+    TPO_LISTENING_SEQUENCE_TYPE: 'tpo_listening_sequence_type',
     TPO_SPEAKING_Q1Q2_QUESTION: 'tpo_speaking_q1q2_type',
     TPO_SPEAKING_Q3Q4_QUESTION: 'tpo_speaking_q3q4_type',
     TPO_SPEAKING_Q5Q6_QUESTION: 'tpo_speaking_q5q6_type'

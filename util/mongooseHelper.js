@@ -55,7 +55,7 @@ module.exports.findClass = function(query, populationOps){
 
 module.exports.classAddAssignment = function (mClass,assignmentId) {
     return new Promise((resolve,reject)=>{
-        mClass.assignmentList.concat([assignmentId]);
+        mClass.assignmentList = mClass.assignmentList.concat([assignmentId]);
         mClass.save(function(err){
             if(err){
                 reject(err);
@@ -148,7 +148,7 @@ module.exports.insertResponse = function (response) {
                                         throw('数据库查找有误');
                                     } else {
                                         if(grade){
-                                            grade.responseList.concat([{
+                                            grade.responseList = grade.responseList.concat([{
                                                 'questionId': questionId,
                                                 'score': -1
                                             }]);
@@ -160,7 +160,7 @@ module.exports.insertResponse = function (response) {
                                             grade.classId = classId;
                                             grade.studentId = userId;
                                             grade.assignmentId = assignmentId;
-                                            grade.responseList.concat([{
+                                            grade.responseList = grade.responseList.concat([{
                                                 'questionId': questionId,
                                                 'score': -1
                                             }]);
@@ -336,7 +336,6 @@ module.exports.insertQuestionGroupToAssignment = function(assignmentId, question
                 }
                 else {
                     assignment.questionGroupList = assignment.questionGroupList.concat([questionGroup]);
-                    console.log("adding-question-group ****"+ questionGroup);
                     let length = assignment.questionGroupList.length;
                     assignment.save((err)=>{
                         if(err){
@@ -366,7 +365,10 @@ module.exports.insertQuestionToGroup = function(newQuestion, assignment, groupId
                 else{
                     //更新assignment的列表
                     if(!index || index < 0 || index > questionGroup.questionList.length){
-                        questionGroup.questionList.concat([newQuestion]);
+                        console.log(newQuestion);
+                        console.log(questionGroup.questionList);
+                        questionGroup.questionList = questionGroup.questionList.concat([newQuestion]);
+                        console.log(questionGroup.questionList);
                     } else {
                         questionGroup.questionList.splice(index, 0, newQuestion);
                     }

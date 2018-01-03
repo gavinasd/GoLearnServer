@@ -179,15 +179,15 @@ module.exports.submitAssignmentInfo = function(req, res){
 
         if(studentAnswer) {
             let updateAnswer = updateStudentAnswer(classId, assignmentId, questionId, studentId, studentAnswer);
-            taskList.concat([updateAnswer]);
+            taskList = taskList.concat([updateAnswer]);
         }
         if(spendTime) {
             let updateSpendTime = updateGradeSpendTime(classId, assignmentId, studentId, spendTime);
-            taskList.concat([updateSpendTime]);
+            taskList = taskList.concat([updateSpendTime]);
         }
         if(markScore) {
             let updateMarkScore = addMarkingScore(classId, assignmentId, questionId, studentId, markScore);
-            taskList.concat([updateMarkScore]);
+            taskList = taskList.concat([updateMarkScore]);
         }
 
         return Promise.all(taskList);
@@ -315,6 +315,8 @@ module.exports.addQuestionGroupToAssignment = function (req, res) {
  * 添加题目到questionGroup中
  */
 module.exports.addQuestionToGroup = function(req, res){
+    console.log("****");
+    console.log("adding question");
     const assignmentId = req.body.assignmentId;
     const groupId = req.body.groupId;
     const quest = req.body.question;
@@ -363,6 +365,7 @@ module.exports.addQuestionToGroup = function(req, res){
             case mConst.QuestionType.TPO_LISTENING_MULTIPLE_CHOICE_TYPE:
             case mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION:
             case mConst.QuestionType.TPO_LISTENING_TABLE_CHOICE_QUESTION:
+            case mConst.QuestionType.TPO_LISTENING_SEQUENCE_TYPE:
                 addTpoListeningQuestion(quest, res, assignment, groupId, userId, index);
                 break;
             case mConst.QuestionType.TPO_SPEAKING_Q1Q2_QUESTION:
@@ -890,7 +893,7 @@ const getMarkScore = function(grade) {
         let scoreList = new Array();
         log.info(grade.responseList);
         for(let mResponse of grade.responseList){
-            scoreList.concat([{
+            scoreList = scoreList.concat([{
                 'questionId': mResponse.questionId,
                 'score': mResponse.score
             }]);
@@ -941,6 +944,7 @@ const updateStudentAnswer = function (classId, assignmentId, questionId, student
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_MULTIPLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_TABLE_CHOICE_QUESTION
+                || question.questionType == mConst.QuestionType.TPO_LISTENING_SEQUENCE_TYPE
             ){
                 let score = (question.answer == studentAnswer)?question.score:0;
                 return addMarkingScore(classId,assignmentId,questionId, studentId, score);
@@ -987,7 +991,7 @@ const addMarkingScore = function (classId, assignmentId,questionId,userId,score)
                 //如果没有出现过这个response
                 if(hasResponse == 0) {
                     console.log("没有这个response，score设置成"+score);
-                    grade.responseList.concat([{
+                    grade.responseList = grade.responseList.concat([{
                         'questionId': questionId,
                         'score': score
                     }]);
@@ -1000,7 +1004,7 @@ const addMarkingScore = function (classId, assignmentId,questionId,userId,score)
                 grade.classId = classId;
                 grade.studentId = userId;
                 grade.assignmentId = assignmentId;
-                grade.responseList.concat([{
+                grade.responseList = grade.responseList.concat([{
                     'questionId': questionId,
                     'score': score
                 }]);

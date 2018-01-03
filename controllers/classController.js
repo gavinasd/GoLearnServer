@@ -58,7 +58,7 @@ module.exports.getClassListByUserId = function (req, res) {
 	//获取userid
 	let userid = req.params.userId;
 	User.findById(userid,function (err, user) {
-		if(err){
+		if(err || !user){
 			util.sendJSONresponse(res,404,{
 				"errmsg":"未查询到该用户."
 			});
@@ -269,7 +269,7 @@ module.exports.classAddStudent = function (req, res) {
         }
 
         if(!mClass.isStudentIn(studentId)){
-            mClass.studentList.concat([studentId]);
+            mClass.studentList = mClass.studentList.concat([studentId]);
             mClass.save(function (err) {
                 if(err){
                     util.handleSavingError(res, err);
@@ -345,7 +345,7 @@ module.exports.classAddTeacher = function (req, res) {
         }
 
         if(!mClass.isTeacherIn(teacherId)){
-            mClass.teacherList.concat([teacherId]);
+            mClass.teacherList = mClass.teacherList.concat([teacherId]);
             mClass.save(function (err) {
                 if(err){
                     util.handleSavingError(res, err);
@@ -624,7 +624,7 @@ module.exports.classAddResource = function(req, res){
 			newResource.save(function (err) {
 				util.handleSavingError(res,err);
 
-				mClass.resourceList.concat([newResource]);
+				mclass.resourceList = mClass.resourceList.concat([newResource]);
 				mClass.save(function(err){util.handleSavingError(res,err)});
 				util.sendJSONresponse(res, 200 , {
 					"res":newResource
