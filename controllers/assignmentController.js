@@ -350,6 +350,7 @@ module.exports.addQuestionToGroup = function(req, res){
             case mConst.QuestionType.TPO_READING_SINGLE_CHOICE_TYPE:
             case mConst.QuestionType.TPO_READING_INSERT_CHOICE_TYPE:
             case mConst.QuestionType.TPO_READING_TOPIC_TYPE:
+            case mConst.QuestionType.TPO_READING_MULTIPLE_TYPE:
                 addTpoReadingQuestion(quest, res, assignment, groupId, userId, index);
                 break;
             case mConst.QuestionType.VOCABULARY_TYPE:
@@ -940,6 +941,7 @@ const updateStudentAnswer = function (classId, assignmentId, questionId, student
         .then(question => {
             if(question.questionType == mConst.QuestionType.TPO_READING_SINGLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_READING_INSERT_CHOICE_TYPE
+                || question.questionType == mConst.QuestionType.TPO_READING_MULTIPLE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_SINGLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_MULTIPLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION
