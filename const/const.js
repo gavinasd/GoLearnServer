@@ -6,6 +6,7 @@ const QuestionType = {
     TPO_READING_INSERT_CHOICE_TYPE : 'tpo_reading_insert',
     TPO_READING_TOPIC_TYPE : 'tpo_reading_topic',
     TPO_READING_MULTIPLE_TYPE: 'tpo_reading_multiple',
+    TPO_READING_CATEGORY_TYPE: 'tpo_reading_category_type',
     VOCABULARY_TYPE : "vocabulary",
     INDEPENDENT_WRITING_TYPE: 'independent_writing',
     INTEGRATED_WRITING_TYPE: 'integrated_writing',

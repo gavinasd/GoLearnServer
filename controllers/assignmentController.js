@@ -351,6 +351,7 @@ module.exports.addQuestionToGroup = function(req, res){
             case mConst.QuestionType.TPO_READING_INSERT_CHOICE_TYPE:
             case mConst.QuestionType.TPO_READING_TOPIC_TYPE:
             case mConst.QuestionType.TPO_READING_MULTIPLE_TYPE:
+            case mConst.QuestionType.TPO_READING_CATEGORY_TYPE:
                 addTpoReadingQuestion(quest, res, assignment, groupId, userId, index);
                 break;
             case mConst.QuestionType.VOCABULARY_TYPE:
@@ -939,17 +940,18 @@ const updateStudentAnswer = function (classId, assignmentId, questionId, student
             return mongooseHelper.findQuestionById(questionId);
         })
         .then(question => {
+            let score = 0;
             if(question.questionType == mConst.QuestionType.TPO_READING_SINGLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_READING_INSERT_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_READING_MULTIPLE_TYPE
+                || question.questionType == mConst.QuestionType.TPO_READING_CATEGORY_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_SINGLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_MULTIPLE_CHOICE_TYPE
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_REPEAT_QUESTION
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_TABLE_CHOICE_QUESTION
                 || question.questionType == mConst.QuestionType.TPO_LISTENING_SEQUENCE_TYPE
             ){
-                let score = (question.answer == studentAnswer)?question.score:0;
-                return addMarkingScore(classId,assignmentId,questionId, studentId, score);
+                score = (question.answer == studentAnswer)?question.score:0;
             }
 
             if(question.questionType == mConst.QuestionType.TPO_READING_TOPIC_TYPE){
@@ -962,17 +964,16 @@ const updateStudentAnswer = function (classId, assignmentId, questionId, student
                     }
                 }
 
-                let score = 0;
                 if(count == 3){
                     score = 2;
                 }
                 else if (count == 2){
                     score = 1;
                 }
-                log.info('score'+score);
-
-                return addMarkingScore(classId, assignmentId,questionId, studentId, score);
             }
+
+            return addMarkingScore(classId,assignmentId,questionId, studentId, score);
+
         });
 };
 
